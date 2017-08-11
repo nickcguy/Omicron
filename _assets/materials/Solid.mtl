@@ -1,0 +1,15 @@
+{
+  "Name": "Solid",
+  "Shader": {
+    "Vertex": "assets/shaders/basic/basic.vert",
+    "Fragment": "assets/shaders/basic/Solid.frag"
+  },
+  "Includes": [],
+  "Uniforms": {
+    "R": 1.0,
+    "G": 1.0,
+    "B": 1.0,
+    "A": 1.0
+  },
+  "Samplers": {}
+}

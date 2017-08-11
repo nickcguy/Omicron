@@ -1,0 +1,21 @@
+{
+  "Name": "Rusted Iron",
+  "Shader": {
+    "Vertex": "assets/shaders/basic/basic.vert",
+    "Fragment": "assets/shaders/mtl/RustedIron/RustedIron.frag"
+  },
+  "Includes": [
+    "Lighting",
+    "Camera"
+  ],
+  "Uniforms": {
+    "AlbedoScalar": 2.2,
+    "Gamma": 2.2
+  },
+  "Samplers": {
+    "Albedo": "assets/textures/RustedIron/rustediron2_basecolor.png",
+    "Metallic": "assets/textures/RustedIron/rustediron2_metallic.png",
+    "Normal": "assets/textures/RustedIron/rustediron2_normal.png",
+    "Roughness": "assets/textures/RustedIron/rustediron2_roughness.png"
+  }
+}

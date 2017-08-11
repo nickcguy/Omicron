@@ -1,0 +1,25 @@
+{
+  "Name": "Oak Floor",
+  "Shader": {
+    "Vertex": "assets/shaders/basic/basic.vert",
+    "Fragment": "assets/shaders/mtl/OakFloor/OakFloor.frag"
+  },
+  "Includes": [
+    "Lighting",
+    "Camera"
+  ],
+  "Uniforms": {
+    "AlbedoScalar": 2.2,
+    "Gamma": 2.2,
+    "HeightScale": 1.0,
+    "Overlap": 0.0,
+    "UVScale": 1.0
+  },
+  "Samplers": {
+    "Albedo": "assets/textures/OakFloor/oakfloor_basecolor.png",
+    "Ambient": "assets/textures/OakFloor/oakfloor_AO.png",
+    "Height": "assets/textures/OakFloor/oakfloor_Height.png",
+    "Normal": "assets/textures/OakFloor/oakfloor_normal.png",
+    "Roughness": "assets/textures/OakFloor/oakfloor_roughness.png"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "Name": "Brick Wall",
+  "Shader": {
+    "Vertex": "assets/shaders/basic/basic.vert",
+    "Fragment": "assets/shaders/mtl/BrickWall/BrickWall.frag"
+  },
+  "Includes": [
+    "Lighting",
+    "Camera"
+  ],
+  "Uniforms": {
+    "AlbedoScalar": 2.2,
+    "Gamma": 2.2,
+    "HeightScale": 1.0,
+    "UVScale": 1.0
+  },
+  "Samplers": {
+    "Albedo": "assets/textures/BrickWall/redbricks2b-albedo.png",
+    "Ambient": "assets/textures/BrickWall/redbricks2b-ao.png",
+    "Height": "assets/textures/BrickWall/redbricks2b-height4b.png",
+    "Metallic": "assets/textures/BrickWall/redbricks2b-metalness.png",
+    "Normal": "assets/textures/BrickWall/redbricks2b-normal.png",
+    "Roughness": "assets/textures/BrickWall/redbricks2b-rough.png"
+  }
+}

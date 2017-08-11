@@ -1,0 +1,10 @@
+{
+  "Name": "Line",
+  "Shader": {
+    "Vertex": "assets/shaders/basic/line.vert",
+    "Fragment": "assets/shaders/basic/line.frag"
+  },
+  "Includes": [],
+  "Uniforms": {},
+  "Samplers": {}
+}

@@ -1,0 +1,12 @@
+{
+  "Name": "Rock",
+  "Shader": {
+    "Vertex": "assets/shaders/basic/basic.vert",
+    "Fragment": "assets/shaders/basic/quad.frag"
+  },
+  "Includes": [],
+  "Uniforms": {},
+  "Samplers": {
+    "image": "assets/models/Rock/Rock-Texture-Surface.jpg"
+  }
+}

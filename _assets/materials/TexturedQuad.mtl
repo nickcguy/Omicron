@@ -1,0 +1,10 @@
+{
+  "Name": "Textured Screen Quad",
+  "Shader": {
+    "Vertex": "assets/shaders/basic/quad.vert",
+    "Fragment": "assets/shaders/basic/quad.frag"
+  },
+  "Includes": [],
+  "Uniforms": {},
+  "Samplers": {}
+}

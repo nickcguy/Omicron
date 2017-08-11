@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Engine>
+    <World>
+
+    </World>
+    <Systems>
+        <System type="ScriptHost" />
+        <System type="PhysicsSystem" >
+            <Property name="Gravity" x="0.0" y="-9.81" z="0.0" />
+        </System>
+        <System type="PsychicInteractionSystem" />
+    </Systems>
+    <Entities>
+
+        <Entity tags="floor">
+            <Transform>
+                <Scale x="100.0" y="1.0" z="100.0" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="CUBE" />
+                <Component type="PhysicsComponent" match="true" />
+                <Component type="MaterialComponent" material="Oak Floor" dynamic="true">
+                    <Uniforms>
+                        <Uniform name="UVScale" value="50" />
+                        <Uniform name="Overlap" value="0.1" />
+                    </Uniforms>
+                </Component>
+                <Component type="ScriptComponent">
+                    <Script path="script.lua"/>
+                    <Bindings>
+                        <Binding event="BeginPlay" function="Event_BeginPlay" />
+                        <Binding event="Tick" function="Event_Tick" />
+                    </Bindings>
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="sphere;0">
+            <Transform>
+                <Translation x="0.0" y="100.0" z="0.0"/>
+                <Rotation x="1.0" y="0.3" z="0.5" w="0.0"/>
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="SPHERE" >
+                    <Parameter name="rings" value="32"   />
+                    <Parameter name="sectors" value="32" />
+                </Component>
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Rusted Iron" dynamic="true" />
+            </Components>
+        </Entity>
+
+        <Entity tags="sphere;1">
+            <Transform>
+                <Translation x="2.0" y="105.0" z="-15.0"/>
+                <Rotation euler="false" x="1.0" y="0.3" z="0.5" w="0.349066"/>
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="SPHERE" />
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+            </Components>
+        </Entity>
+
+        <Entity tags="sphere;2">
+            <Transform>
+                <Translation x="-1.5" y="97.8" z="-2.5"/>
+                <Rotation euler="false" x="1.0" y="0.3" z="0.5" w="0.698132"/>
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="SPHERE" />
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Brick Wall" dynamic="true" />
+            </Components>
+        </Entity>
+
+        <Entity tags="sphere;3">
+            <Transform>
+                <Translation x="-3.8" y="98.0" z="-12.3"/>
+                <Rotation euler="false" x="1.0" y="0.3" z="0.5" w="1.047198"/>
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="SPHERE" />
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Oak Floor" dynamic="true" >
+                    <Uniforms>
+                        <Uniform name="UVScale" value="1" />
+                        <Uniform name="Overlap" value="0.1" />
+                    </Uniforms>
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="sphere;4">
+            <Transform>
+                <Translation x="2.4" y="99.6" z="-3.5"/>
+                <Rotation euler="false" x="1.0" y="0.3" z="0.5" w="1.396263"/>
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="SPHERE" >
+                    <Parameter name="rings" value="128"   />
+                    <Parameter name="sectors" value="128" />
+                </Component>
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Rusted Iron" alpha="0.5" />
+            </Components>
+        </Entity>
+
+        <Entity tags="ovrHand;ovrHand_Left">
+            <Transform>
+                <Scale x="0.1" y="0.1" z="0.1" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="false" path="assets/models/Rock/rock.obj"/>
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Rock" alpha="1.0" />
+            </Components>
+        </Entity>
+
+        <Entity tags="ovrHand;ovrHand_Right">
+            <Transform>
+                <Scale x="0.5" y="0.5" z="0.5" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="PLANE">
+                    <Parameter name="rings" value="64"   />
+                    <Parameter name="sectors" value="64" />
+                </Component>
+                <Component type="PhysicsComponent" match="true" mass="1.0" kinematic="true" />
+                <Component type="MaterialComponent" material="Solid">
+                    <Uniforms>
+                        <Uniform name="R" value="0.0" />
+                        <Uniform name="G" value="0.0" />
+                        <Uniform name="B" value="1.0" />
+                    </Uniforms>
+                </Component>
+            </Components>
+        </Entity>
+
+    </Entities>
+</Engine>
