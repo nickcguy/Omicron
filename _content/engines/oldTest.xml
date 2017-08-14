@@ -6,6 +6,7 @@
     <Systems>
         <System type="ScriptHost" />
         <System type="PhysicsSystem" />
+        <System type="PsychicInteractionSystem" />
     </Systems>
     <Entities>
 
@@ -21,6 +22,13 @@
                         <Uniform name="UVScale" value="50" />
                         <Uniform name="Overlap" value="0.1" />
                     </Uniforms>
+                </Component>
+                <Component type="ScriptComponent">
+                    <Script path="script.lua"/>
+                    <Bindings>
+                        <Binding event="BeginPlay" function="Event_BeginPlay" />
+                        <Binding event="Tick" function="Event_Tick" />
+                    </Bindings>
                 </Component>
             </Components>
         </Entity>
@@ -92,6 +100,37 @@
                 </Component>
                 <Component type="PhysicsComponent" match="true" mass="1.0" />
                 <Component type="MaterialComponent" material="Rusted Iron" alpha="0.5" />
+            </Components>
+        </Entity>
+
+        <Entity tags="ovrHand;ovrHand_Left">
+            <Transform>
+                <Scale x="0.1" y="0.1" z="0.1" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="SPHERE"/>
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Rock" alpha="1.0" />
+            </Components>
+        </Entity>
+
+        <Entity tags="ovrHand;ovrHand_Right">
+            <Transform>
+                <Scale x="0.5" y="0.5" z="0.5" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="PLANE">
+                    <Parameter name="rings" value="64"   />
+                    <Parameter name="sectors" value="64" />
+                </Component>
+                <Component type="PhysicsComponent" match="true" mass="1.0" kinematic="true" />
+                <Component type="MaterialComponent" material="Solid">
+                    <Uniforms>
+                        <Uniform name="R" value="0.0" />
+                        <Uniform name="G" value="0.0" />
+                        <Uniform name="B" value="1.0" />
+                    </Uniforms>
+                </Component>
             </Components>
         </Entity>
 

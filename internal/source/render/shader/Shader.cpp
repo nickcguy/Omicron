@@ -8,6 +8,8 @@
 #include <utils/FileUtils.hpp>
 #include <utils/TextUtils.hpp>
 
+#define SHADER_VERBOSE_ERROR true
+
 namespace Omicron {
 
     Shader &Shader::Use() {
@@ -152,6 +154,13 @@ namespace Omicron {
                           << std::endl;
             }
         }
+
+        #if SHADER_VERBOSE_ERROR
+        if(!success) {
+            printf("VERTEX: \n%s\n", vertSource.c_str());
+            printf("FRAGMENT: \n%s\n", fragSource.c_str());
+        }
+        #endif
     }
 
     Shader::~Shader() {

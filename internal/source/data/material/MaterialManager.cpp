@@ -128,22 +128,7 @@ namespace Omicron {
     }
 
     int MaterialManager::MakeDynamicMaterial(std::string name) {
-//        if(!HasMaterial(name))
             return -2;
-
-        if(dynamicMaterialRegistry.find(name) == dynamicMaterialRegistry.end()) {
-            std::map<int, OmicronMaterial*> map;
-            dynamicMaterialRegistry[name] = map;
-        }
-
-        int last = -1;
-        if(!dynamicMaterialRegistry[name].empty())
-            last = dynamicMaterialRegistry[name].rbegin()->first;
-
-        int next = last + 1;
-        dynamicMaterialRegistry[name][next] = new OmicronMaterial(GetMaterial(name));
-
-        return next;
     }
 
     OmicronMaterial* MaterialManager::GetMaterial(std::string name, int instance, bool validOnly) {
@@ -161,6 +146,10 @@ namespace Omicron {
         if(dynamicMaterialRegistry[name].empty())
             dynamicMaterialRegistry.erase(name);
 
+    }
+
+    OmicronMaterial* MaterialManager::GetMaterial(std::string name, bool validOnly) {
+        return GetMaterialBase(name, validOnly);
     }
 
 }

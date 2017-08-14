@@ -23,6 +23,7 @@ namespace Omicron {
         MaterialManager();
 
 
+        OmicronMaterial* GetMaterial(std::string name, bool validOnly = false);
         OmicronMaterial* GetMaterial(std::string name, int instance = -1, bool validOnly = false);
 
         OmicronMaterial* GetMaterialBase(std::string name, bool validOnly = false);
@@ -57,6 +58,8 @@ namespace Omicron {
         std::map<std::string, std::map<int, OmicronMaterial*>> dynamicMaterialRegistry;
         ctpl::thread_pool threadPool;
         std::function<void(OmicronMaterial*)> onNewMaterial;
+
+        std::string pathPrefix = "";
     };
 
 

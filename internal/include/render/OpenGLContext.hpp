@@ -11,6 +11,7 @@
 #include <render/camera/RollCamera.hpp>
 #include <render/ovr/OVRRenderer.hpp>
 #include <engine/input/InputProvider.hpp>
+#include <render/newRender/BaseRenderer.hpp>
 #include "OpenGLRenderer.hpp"
 
 #ifndef MAX_KEYS
@@ -26,33 +27,40 @@ namespace Omicron {
     public:
 
         explicit OpenGLContext(GLFWwindow* window, IRenderProvider* renderProvider);
+        virtual void Init();
         void SetActiveContext();
         void Loop(OmicronEngine* engine = nullptr);
         void Terminate();
         void ProcessKeys(float delta);
+        virtual void SpawnRenderer();
+        virtual void SpawnCamera();
 
         virtual void Render(float delta);
 
-        RollCamera& GetCamera();
+        Camera* GetCamera();
 
         GLFWwindow* GetWindow() const;
-        OpenGLRenderer* renderer;
-        InputProvider* inputProvider;
+        BaseRenderer* renderer = nullptr;
+        InputProvider* inputProvider=  nullptr;
+
+        size_t GetWidth();
+        size_t GetHeight();
 
     protected:
-        GLFWwindow* window;
-        IRenderProvider* renderProvider;
-//        Camera camera;
-        RollCamera camera;
+        size_t windowWidth;
+        size_t windowHeight;
+        GLFWwindow* window = nullptr;
+        IRenderProvider* renderProvider = nullptr;
+        Camera* camera;
         bool firstMouse = true;
         double lastX = 0;
         double lastY = 0;
         bool keys[MAX_KEYS];
 
-    private:
         bool terminated = false;
 
-        void Resize(int width, int height);
+        virtual void Resize(int width, int height);
+
     };
 }
 

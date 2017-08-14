@@ -10,10 +10,13 @@ namespace Omicron {
     class PrimitiveRenderer {
     public:
         void RenderQuad();
+        unsigned int BlankTexture();
 
     protected:
         unsigned int quadVAO = 0;
         unsigned int quadVBO = 0;
+
+        unsigned int texId = 0;
     };
 
 }

@@ -53,7 +53,8 @@ namespace Omicron {
             system->Update(delta);
 
         if(inputProvider != nullptr) {
-            if(inputProvider->GetType() == OVR) {
+            auto type = inputProvider->GetType();
+            if(type == OVR) {
                 auto input = static_cast<OVRInputProvider*>(inputProvider);
                 if(input->inputData.Buttons & ovrButton_A && !executed) {
                     printf("Script execution request received\n");

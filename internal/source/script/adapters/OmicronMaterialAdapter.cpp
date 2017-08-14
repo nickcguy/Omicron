@@ -24,7 +24,7 @@ namespace Omicron {
     }
 
     OmicronMaterial* MaterialAccessor::GetMaterial() {
-        return MaterialManager::GetActiveMaterialManager()->GetMaterial(this->name);
+        return MaterialManager::GetActiveMaterialManager()->GetMaterial(this->name, false);
     }
 
     void OmicronMaterialAdapter::Register(const sel::State& state) {

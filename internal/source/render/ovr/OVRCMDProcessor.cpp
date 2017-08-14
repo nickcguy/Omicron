@@ -76,7 +76,7 @@ namespace Omicron {
         }
 
         void OVRCMDProcessor::Render(RenderCommand cmd, OVR::Matrix4f projection, OVR::Matrix4f view) {
-            auto mtl = renderer->GetMtlManager().GetMaterial(cmd.material);
+            auto mtl = renderer->GetMtlManager().GetMaterial(cmd.material, true);
             mtl->SetUniforms();
             renderer->PostIncludes(mtl);
 

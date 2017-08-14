@@ -133,8 +133,8 @@ namespace Omicron {
 
         for(std::string include : mtl->GetIncludes()) {
             if(include == "Camera") {
-                mtl->GetShader().SetVector3f("camPos", context->GetCamera().Position);
-                mtl->GetShader().SetVector3f("camDir", context->GetCamera().Front);
+                mtl->GetShader().SetVector3f("camPos", context->GetCamera()->Position);
+                mtl->GetShader().SetVector3f("camDir", context->GetCamera()->Front);
                 return;
             }
 
@@ -182,7 +182,7 @@ namespace Omicron {
     }
 
     glm::vec3 OpenGLRenderer::GetCameraPosition() {
-        return context->GetCamera().Position;
+        return context->GetCamera()->Position;
     }
 
 

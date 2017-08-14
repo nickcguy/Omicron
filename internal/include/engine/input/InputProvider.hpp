@@ -8,6 +8,7 @@
 namespace Omicron {
 
     enum InputProviderType {
+        NONE,
         KBM,
         OVR,
         InputProviderType_LENGTH
@@ -15,7 +16,9 @@ namespace Omicron {
 
     class InputProvider {
     public:
-        virtual InputProviderType GetType()=0;
+        inline virtual InputProviderType GetType() {
+            return NONE;
+        }
 
     };
 

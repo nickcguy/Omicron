@@ -40,13 +40,6 @@ namespace Omicron {
             btVector3 max;
             comp->GetBody()->getAabb(min, max);
 
-            engine->debugLines.push_back(new DebugLine(
-            {min.x(), min.y(), min.z()}, // World start
-            {max.x(), max.y(), max.z()}, // World end
-            {1.f, 0.f, 1.f},
-            {0.f, 1.f, 1.f},
-            0.01f));
-
         }
     }
 

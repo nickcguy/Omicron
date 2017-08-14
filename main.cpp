@@ -12,16 +12,29 @@
 #include <engine/system/PsychicInteractionSystem.hpp>
 #include <script/ScriptHost.hpp>
 #include <io/EngineLoader.hpp>
+#include <render/ovr/OVRContext.hpp>
 
 #define USE_SOURCE_WORLD false
 
 using namespace Omicron;
 
-int main() {
+bool useOVR = false;
+#define OVR_FLAG "-ovr"
 
-//    std::cout << "Press any key to continue...";
-//    std::cin.ignore();
-    std::cout << "Beginning startup..." << std::endl;
+int main(int argc, char** argv) {
+
+    for(int i = 0; i < argc; i++) {
+        auto arg = argv[i];
+        if(strcmp(arg, OVR_FLAG))
+            useOVR = true;
+    }
+
+    std::cout << "Press any key to continue...";
+    std::cin.ignore();
+    if(useOVR) {
+        printf("\"%s\" launch flag detected, initialising in OVR mode...\n", OVR_FLAG);
+    }
+    printf("Beginning startup...\n");
 
     #if USE_SOURCE_WORLD
 
@@ -53,14 +66,25 @@ int main() {
 
     DEBUG_PRINT(AggregateRenderProvider renderProvider);
     DEBUG_PRINT(renderProvider.AddProvider(engineWrapper.GetChild()));
-    DEBUG_PRINT(OpenGLContext context(window, &renderProvider));
-    DEBUG_PRINT(engineWrapper.GetChild()->SetInputProvider(context.inputProvider));
+    OpenGLContext* context;
+
+    if(useOVR) {
+        context = new OVRContext(window, &renderProvider);
+        context->Init();
+        ((OVRContext*)context)->InitOVR();
+    }else{
+
+        context = new OpenGLContext(window, &renderProvider);
+        context->Init();
+    }
+
+    DEBUG_PRINT(engineWrapper.GetChild()->SetInputProvider(context->inputProvider));
 
     OmicronEngine* engine = engineWrapper.GetChild();
 
     #if !USE_SOURCE_WORLD
     EngineLoader::LoadIntoEngine("engines/testEngine.xml", engine);
-    if(ovr::OVRRenderer* renderer = dynamic_cast<ovr::OVRRenderer*>(context.renderer)) {
+    if(ovr::OVRRenderer* renderer = dynamic_cast<ovr::OVRRenderer*>(context->renderer)) {
         std::vector<OmicronEntity*> leftHandEntities = engine->GetTaggedEntities_All({"ovrHand", "ovrHand_Left"});
         if(!leftHandEntities.empty()) {
             auto e = leftHandEntities[0];
@@ -194,9 +218,11 @@ int main() {
 //    pointCloudEntity->SetComponent<PointCloudComponent>(comp);
 //    engineWrapper.GetChild()->AddEntity(pointCloudEntity);
 
-    context.Loop();
+    context->Loop();
 
     engineWrapper.Stop();
+
+    CLEAR_PTR(context);
 
     return 0;
 }

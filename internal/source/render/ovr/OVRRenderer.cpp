@@ -159,9 +159,9 @@ namespace Omicron {
                 auto headPos = headPose.Translation;
                 headPos -= trackingState.CalibratedOrigin.Position;
 
-                context->GetCamera().Position.x = headPos.x;
-                context->GetCamera().Position.y = headPos.y;
-                context->GetCamera().Position.z = headPos.z;
+                context->GetCamera()->Position.x = headPos.x;
+                context->GetCamera()->Position.y = headPos.y;
+                context->GetCamera()->Position.z = headPos.z;
 
                 auto poseQuat = headPose.Rotation;
 
@@ -170,11 +170,11 @@ namespace Omicron {
                 float yaw;
                 poseQuat.GetEulerAngles<OVR::Axis::Axis_X, OVR::Axis::Axis_Y, OVR::Axis::Axis_Z>(&yaw, &pitch, &roll);
 
-                context->GetCamera().Roll = roll;
-                context->GetCamera().Pitch = pitch;
-                context->GetCamera().Yaw = -yaw;
+                context->GetCamera()->Roll = roll;
+                context->GetCamera()->Pitch = pitch;
+                context->GetCamera()->Yaw = -yaw;
 
-                context->GetCamera().SetRotation(Utils::ConvertQuat(poseQuat.Conj()));
+//                context->GetCamera()->SetRotation(Utils::ConvertQuat(poseQuat.Conj()));
             }
 
 
@@ -186,16 +186,16 @@ namespace Omicron {
                     OVRInputProvider* inputProvider = static_cast<OVRInputProvider*>(context->inputProvider);
                     inputProvider->trackingState = trackingState;
                     inputProvider->inputData = state;
-                    inputProvider->translationOffset = context->GetCamera().Position;
+//                    inputProvider->translationOffset = context->GetCamera().Position;
                 }
 
-                OmicronMaterial* mtl = mtlManager.GetMaterial("Oak Floor");
+                OmicronMaterial* mtl = mtlManager.GetMaterial("Oak Floor", false);
 
                 if(trackingState.HandStatusFlags[hand] & ovrStatus_PositionTracked) {
                     if(handEntities[hand]) {
                         OVR::Posef handPose = trackingState.HandPoses[hand].ThePose;
 
-                        handEntities[hand]->transform.Translation = Utils::ConvertVec3(handPose.Translation) + context->GetCamera().Position;
+//                        handEntities[hand]->transform.Translation = Utils::ConvertVec3(handPose.Translation) + context->GetCamera().Position;
                         handEntities[hand]->transform.useMatrix = true;
                         handEntities[hand]->transform.Scale = {0.1f, 0.1f, 0.1f};
 
@@ -304,7 +304,7 @@ namespace Omicron {
         }
 
         OVR::Posef OVRRenderer::VirtualWorldTransformfromRealPose(const Posef& sensorHeadPose, ovrTrackingOrigin trackingOrigin) {
-            Quatf baseQ = Quatf(Vector3f(0,1,0), context->GetCamera().Yaw);
+            Quatf baseQ = Quatf(Vector3f(0,1,0), context->GetCamera()->Yaw);
 
             Vector3f BodyPos(7.7f, 1.76f - 0.15f, -1.0f);
             Vector3f BodyPoseFloorLevel(7.7f, 0.0f, -1.0f);
@@ -316,9 +316,9 @@ namespace Omicron {
         void OVRRenderer::RenderFBO(std::vector<RenderCommand> cmds, ovrPosef EyeRenderPose[2]) {
 
             Vector3f Pos = {
-            context->GetCamera().Position.x,
-            context->GetCamera().Position.y,
-            context->GetCamera().Position.z,
+            context->GetCamera()->Position.x,
+            context->GetCamera()->Position.y,
+            context->GetCamera()->Position.z,
             };
 
             static float Yaw(0.f);
@@ -359,7 +359,7 @@ namespace Omicron {
                 fboRenderTexture[eye]->UnsetRenderSurface();
 
             }
-            OmicronMaterial* quadMtl = mtlManager.GetMaterial("Textured Screen Quad");
+            OmicronMaterial* quadMtl = mtlManager.GetMaterial("Textured Screen Quad", true);
             quadMtl->GetShader().Use();
 
             for(int eye = 0; eye < 2; eye++) {
@@ -394,9 +394,9 @@ namespace Omicron {
         void OVRRenderer::RenderDirect(std::vector<RenderCommand> cmds, ovrPosef EyeRenderPose[2]) {
 
             Vector3f Pos = {
-            context->GetCamera().Position.x,
-            context->GetCamera().Position.y,
-            context->GetCamera().Position.z,
+            context->GetCamera()->Position.x,
+            context->GetCamera()->Position.y,
+            context->GetCamera()->Position.z,
             };
 
             static float Yaw(0.f);

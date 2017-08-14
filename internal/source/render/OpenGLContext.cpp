@@ -13,10 +13,15 @@
 #include <engine/OmicronEngine.hpp>
 #include <engine/OmicronEngineWrapper.hpp>
 #include <io/EngineLoader.hpp>
+#include <render/newRender/FlatRenderer.hpp>
 
 namespace Omicron {
 
     OpenGLContext::OpenGLContext(GLFWwindow* window, IRenderProvider* renderProvider) : window(window), renderProvider(renderProvider) {
+
+    }
+
+    void OpenGLContext::Init() {
         DEBUG_PRINT(SetActiveContext());
 
         for(int i = 0; i < MAX_KEYS; i++)
@@ -33,16 +38,16 @@ namespace Omicron {
         DEBUG_PRINT(glfwGetWindowSize(window, &width, &height));
 
 
-        #if USE_OVR
-        DEBUG_PRINT(renderer = new ovr::OVRRenderer(this));
-        #else
-        renderer = new OpenGLRenderer(this);
-        #endif
+//        #if USE_OVR
+//        DEBUG_PRINT(renderer = new ovr::OVRRenderer(this));
+//        #else
+//        renderer = new OpenGLRenderer(this);
+//        #endif
 
-
-
+        SpawnRenderer();
         renderer->Init();
-        camera.Position = {3.f, 3.f, 3.f};
+        SpawnCamera();
+        camera->Position = {3.f, 3.f, 3.f};
         Resize(width, height);
 
         glfwSetWindowUserPointer(window, this);
@@ -54,22 +59,30 @@ namespace Omicron {
                 glfwSetWindowShouldClose(win, GL_TRUE);
 
             if(action == GLFW_PRESS) {
-                if(key == GLFW_KEY_1)
-                    context->renderer->SetBufferType(BufferType::BUF_COLOUR);
-                if(key == GLFW_KEY_2)
-                    context->renderer->SetBufferType(BufferType::BUF_NORMAL);
-                if(key == GLFW_KEY_3)
-                    context->renderer->SetBufferType(BufferType::BUF_WORLD_NORMAL);
-                if(key == GLFW_KEY_4)
-                    context->renderer->SetBufferType(BufferType::BUF_TEXCOORDS);
-                if(key == GLFW_KEY_5)
-                    context->renderer->SetBufferType(BufferType::BUF_POSITION);
-                if(key == GLFW_KEY_6)
-                    context->renderer->SetBufferType(BufferType::BUF_5);
-                if(key == GLFW_KEY_7)
-                    context->renderer->SetBufferType(BufferType::BUF_6);
-                if(key == GLFW_KEY_8)
-                    context->renderer->SetBufferType(BufferType::BUF_7);
+
+                if(key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
+                    int id = key - GLFW_KEY_0;
+                    context->renderer->SetBufferType(id);
+                }
+
+//                if(key == GLFW_KEY_1)
+//                    context->renderer->SetBufferType(1);
+//                if(key == GLFW_KEY_2)
+//                    context->renderer->SetBufferType(2);
+//                if(key == GLFW_KEY_3)
+//                    context->renderer->SetBufferType(3);
+//                if(key == GLFW_KEY_4)
+//                    context->renderer->SetBufferType(4);
+//                if(key == GLFW_KEY_5)
+//                    context->renderer->SetBufferType(5);
+//                if(key == GLFW_KEY_6)
+//                    context->renderer->SetBufferType(6);
+//                if(key == GLFW_KEY_7)
+//                    context->renderer->SetBufferType(7);
+//                if(key == GLFW_KEY_8)
+//                    context->renderer->SetBufferType(8);
+//                if(key == GLFW_KEY_9)
+//                    context->renderer->SetBufferType(9);
 
                 if(key == GLFW_KEY_TAB) {
                     if(context->renderer->GetPolygonMode() == GL_POINT)
@@ -83,9 +96,9 @@ namespace Omicron {
 
             if(key == GLFW_KEY_LEFT_SHIFT) {
                 if(action == GLFW_PRESS)
-                    context->camera.MovementSpeed = 30.f;
+                    context->camera->MovementSpeed = 30.f;
                 else if(action == GLFW_RELEASE)
-                    context->camera.MovementSpeed = 3.f;
+                    context->camera->MovementSpeed = 3.f;
             }
 
             if(action == GLFW_PRESS)
@@ -118,12 +131,12 @@ namespace Omicron {
             context->lastX = xPos;
             context->lastY = yPos;
 
-            context->camera.ProcessMouseMovement(xOffset, yOffset);
+            context->camera->ProcessMouseMovement(xOffset, yOffset);
         });
 
         glfwSetScrollCallback(window, [](GLFWwindow* win, double xOffset, double yOffset) {
             OpenGLContext* context = static_cast<OpenGLContext*>(glfwGetWindowUserPointer(win));
-            context->camera.ProcessMouseScroll(yOffset);
+            context->camera->ProcessMouseScroll(yOffset);
         });
 
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow* win, int width, int height) {
@@ -139,6 +152,8 @@ namespace Omicron {
     }
 
     void OpenGLContext::Resize(int width, int height) {
+        this->windowWidth  = width;
+        this->windowHeight = height;
         if(renderer)
             renderer->Resize(width, height);
         glViewport(0, 0, width, height);
@@ -149,7 +164,7 @@ namespace Omicron {
         float last = 0.f;
         float current = 0.f;
 
-        camera.Position = {10.f, 3.f, 10.f};
+        camera->Position = {10.f, 3.f, 10.f};
 
         while(!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -176,26 +191,15 @@ namespace Omicron {
         }
 
         renderer->Shutdown();
+        CLEAR_PTR(renderer);
 
         Terminate();
     }
 
     void OpenGLContext::Render(float delta) {
-
-        renderer->SetView(camera.GetViewMatrix());
-
-        renderer->PreRender(delta);
         std::vector<RenderCommand> cmds = renderProvider->Renderables();
-        cmds = renderer->Sort(cmds);
-
-        if(renderer->HandlesOwnLoop()) {
-            renderer->Render(cmds);
-        }else{
-            for(RenderCommand cmd : cmds)
-                renderer->Render(cmd);
-        }
-
-        renderer->PostRender();
+        renderer->Update(delta);
+        renderer->Render(cmds);
     }
 
     void OpenGLContext::Terminate() {
@@ -206,18 +210,34 @@ namespace Omicron {
     }
 
     void OpenGLContext::ProcessKeys(float delta) {
-        if(keys[GLFW_KEY_W]) camera.ProcessKeyboard(FORWARD, delta);
-        if(keys[GLFW_KEY_S]) camera.ProcessKeyboard(BACKWARD, delta);
-        if(keys[GLFW_KEY_A]) camera.ProcessKeyboard(LEFT, delta);
-        if(keys[GLFW_KEY_D]) camera.ProcessKeyboard(RIGHT, delta);
+        if(keys[GLFW_KEY_W]) camera->ProcessKeyboard(FORWARD, delta);
+        if(keys[GLFW_KEY_S]) camera->ProcessKeyboard(BACKWARD, delta);
+        if(keys[GLFW_KEY_A]) camera->ProcessKeyboard(LEFT, delta);
+        if(keys[GLFW_KEY_D]) camera->ProcessKeyboard(RIGHT, delta);
     }
 
-    RollCamera& OpenGLContext::GetCamera() {
+    Camera* OpenGLContext::GetCamera() {
         return camera;
     }
 
     GLFWwindow* OpenGLContext::GetWindow() const {
         return window;
+    }
+
+    size_t OpenGLContext::GetWidth() {
+        return windowWidth;
+    }
+
+    size_t OpenGLContext::GetHeight() {
+        return windowHeight;
+    }
+
+    void OpenGLContext::SpawnRenderer() {
+        renderer = new FlatRenderer(this);
+    }
+
+    void OpenGLContext::SpawnCamera() {
+        camera = new Camera();
     }
 
 };
