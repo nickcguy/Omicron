@@ -24,7 +24,7 @@ namespace Omicron {
         PhysicsComponentAccessor* GetPhysics();
 
     protected:
-        OmicronEntityAccessor* entity;
+        OmicronEntity* entity = nullptr;
     };
 
     class EntityComponentAdapter : public IScriptable {

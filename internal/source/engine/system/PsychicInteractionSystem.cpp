@@ -31,19 +31,20 @@ namespace Omicron {
         btVector3 start(position.x, position.y, position.z);
         btVector3 end(pose.Translation.x - direction.x, pose.Translation.y - direction.y, pose.Translation.z - direction.z);
 
-        printf("Raytrace: Start [%f, %f, %f], End [%f, %f, %f]\n", start.x(), start.y(), start.z(), end.x(), end.y(), end.z());
 
         btCollisionWorld::ClosestRayResultCallback callback(start, end);
-
-        engine->debugLines.push_back(new DebugLine(
-                {start.x(), start.y(), start.z()}, // World start
-                {end.x(), end.y(), end.z()}, // World end
-                {1.f, 0.f, 0.f},
-                {0.f, 1.f, 0.f}));
 
         physicsSystem->GetWorld()->rayTest(start, end, callback);
 
         if(callback.hasHit()) {
+
+            engine->debugLines.push_back(new DebugLine(
+            {start.x(), start.y(), start.z()}, // World start
+            {end.x(), end.y(), end.z()}, // World end
+            {0.f, 1.f, 0.f},
+            {0.f, 1.f, 0.f}));
+
+            printf("Raytrace hit: [%f, %f, %f]\n", callback.m_hitPointWorld.x(), callback.m_hitPointWorld.y(), callback.m_hitPointWorld.z());
 
             if(hitPos) {
                 hitPos->x = callback.m_hitPointWorld.x();
@@ -56,6 +57,12 @@ namespace Omicron {
                 physicsComp->GetBody()->activate(true);
                 return physicsComp->owningEntity;
             }
+        }else{
+            engine->debugLines.push_back(new DebugLine(
+            {start.x(), start.y(), start.z()}, // World start
+            {end.x(), end.y(), end.z()}, // World end
+            {1.f, 0.f, 0.f},
+            {1.f, 0.f, 0.f}));
         }
 
         return nullptr;

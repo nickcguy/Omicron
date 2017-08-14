@@ -115,7 +115,7 @@ namespace Omicron {
         }
 
         if(primitiveId == "PLANE") {
-
+            return new MeshComponent(MeshFactory::PlaneVertices());
         }
     }
 

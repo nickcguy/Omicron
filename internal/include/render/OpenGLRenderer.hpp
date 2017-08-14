@@ -66,6 +66,9 @@ namespace Omicron {
         BUF_WORLD_NORMAL,
         BUF_TEXCOORDS,
         BUF_POSITION,
+        BUF_5,
+        BUF_6,
+        BUF_7,
         BufferType_LENGTH
     };
 

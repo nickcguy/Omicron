@@ -5,9 +5,7 @@
     </World>
     <Systems>
         <System type="ScriptHost" />
-        <System type="PhysicsSystem" >
-            <Property name="Gravity" x="0.0" y="-9.81" z="0.0" />
-        </System>
+        <System type="PhysicsSystem" />
         <System type="PsychicInteractionSystem" />
     </Systems>
     <Entities>
@@ -18,8 +16,8 @@
             </Transform>
             <Components>
                 <Component type="MeshComponent" primitive="true" path="CUBE" />
-                <Component type="PhysicsComponent" match="true" />
-                <Component type="MaterialComponent" material="Oak Floor" dynamic="true">
+                <Component type="PhysicsComponent" match="true" canSleep="false" />
+                <Component type="MaterialComponent" material="Oak Floor" >
                     <Uniforms>
                         <Uniform name="UVScale" value="50" />
                         <Uniform name="Overlap" value="0.1" />
@@ -110,7 +108,7 @@
                 <Scale x="0.1" y="0.1" z="0.1" />
             </Transform>
             <Components>
-                <Component type="MeshComponent" primitive="false" path="assets/models/Rock/rock.obj"/>
+                <Component type="MeshComponent" primitive="true" path="SPHERE"/>
                 <Component type="PhysicsComponent" match="true" mass="1.0" />
                 <Component type="MaterialComponent" material="Rock" alpha="1.0" />
             </Components>

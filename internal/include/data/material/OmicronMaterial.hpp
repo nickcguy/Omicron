@@ -43,6 +43,9 @@ namespace Omicron {
         void SetUniforms(std::map<std::string, float> externalUniforms = std::map<std::string, float>());
         Shader& GetShader();
         std::vector<std::string> GetIncludes();
+
+        const std::map<std::string, Texture*>& GetSamplers() const;
+
         std::string GetName();
 
         void SetName(std::string name);

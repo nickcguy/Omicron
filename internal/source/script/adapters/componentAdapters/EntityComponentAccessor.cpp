@@ -9,31 +9,31 @@ namespace Omicron {
 
 
     EntityComponentAccessor::EntityComponentAccessor() {}
-    EntityComponentAccessor::EntityComponentAccessor(OmicronEntityAccessor* entity) : entity(entity) {}
+    EntityComponentAccessor::EntityComponentAccessor(OmicronEntityAccessor* entity) : entity(entity->GetEntity()) {}
 
     MaterialComponentAccessor* EntityComponentAccessor::GetMaterial() {
         if(entity)
-            if(entity->GetEntity()->HasComponent<MaterialComponent>())
-                return new MaterialComponentAccessor(entity->GetEntity()->GetCastComponent<MaterialComponent>());
+            if(entity->HasComponent<MaterialComponent>())
+                return new MaterialComponentAccessor(entity->GetCastComponent<MaterialComponent>());
         return nullptr;
     }
 
     PhysicsComponentAccessor* EntityComponentAccessor::GetPhysics() {
         if(entity)
-            if(entity->GetEntity()->HasComponent<PhysicsComponent>())
-                return new PhysicsComponentAccessor(entity->GetEntity()->GetCastComponent<PhysicsComponent>());
+            if(entity->HasComponent<PhysicsComponent>())
+                return new PhysicsComponentAccessor(entity->GetCastComponent<PhysicsComponent>());
         return nullptr;
     }
 
     void EntityComponentAdapter::Register(const sel::State& state) {
-        state["ComponentAccessor"].SetClass<EntityComponentAccessor>(
+        state["ComponentAccessor"].SetClass<EntityComponentAccessor, OmicronEntityAccessor*>(
             "GetMaterial", &EntityComponentAccessor::GetMaterial,
             "GetPhysics", &EntityComponentAccessor::GetPhysics
         );
     }
 
     const char* EntityComponentAdapter::Name() {
-        return nullptr;
+        return "EntityComponentAdapter";
     }
 
     /*

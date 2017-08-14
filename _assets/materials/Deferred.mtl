@@ -1,0 +1,10 @@
+{
+  "Name": "Deferred",
+  "Shader": {
+    "Vertex": "assets/shaders/advanced/deferred/Deferred.vert",
+    "Fragment": "assets/shaders/advanced/deferred/Deferred.frag"
+  },
+  "Includes": [],
+  "Uniforms": {},
+  "Samplers": {}
+}

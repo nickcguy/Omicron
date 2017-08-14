@@ -7,6 +7,6 @@
   "Includes": [],
   "Uniforms": {},
   "Samplers": {
-    "image": "assets/models/Rock/Rock-Texture-Surface.jpg"
+    "Albedo": "assets/models/Rock/Rock-Texture-Surface.jpg"
   }
 }

@@ -64,6 +64,12 @@ namespace Omicron {
                     context->renderer->SetBufferType(BufferType::BUF_TEXCOORDS);
                 if(key == GLFW_KEY_5)
                     context->renderer->SetBufferType(BufferType::BUF_POSITION);
+                if(key == GLFW_KEY_6)
+                    context->renderer->SetBufferType(BufferType::BUF_5);
+                if(key == GLFW_KEY_7)
+                    context->renderer->SetBufferType(BufferType::BUF_6);
+                if(key == GLFW_KEY_8)
+                    context->renderer->SetBufferType(BufferType::BUF_7);
 
                 if(key == GLFW_KEY_TAB) {
                     if(context->renderer->GetPolygonMode() == GL_POINT)

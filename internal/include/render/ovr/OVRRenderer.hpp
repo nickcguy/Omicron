@@ -30,6 +30,8 @@ namespace Omicron {
             virtual bool HandlesOwnLoop() override;
 
             virtual void Render(RenderCommand cmd) override;
+
+            virtual void Render(RenderCommand cmd, OVR::Matrix4f& proj, OVR::Matrix4f& view, bool toDeferred = true);
             virtual void Render(std::vector<RenderCommand> cmd) override;
 
             void SetHandEntity(ovrHandType hand, OmicronEntity* entity);

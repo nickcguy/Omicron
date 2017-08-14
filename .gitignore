@@ -20,7 +20,7 @@
 
 # Fortran module files
 *.mod
-*.smod
+*.smo
 
 # Compiled Static libraries
 *.lai
@@ -36,3 +36,4 @@
 
 cmake-build-relwithdebinfo
 /Build
+/_Working

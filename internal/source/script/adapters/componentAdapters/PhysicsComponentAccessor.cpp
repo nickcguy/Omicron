@@ -3,6 +3,7 @@
 //
 
 #include <script/adapters/componentAdapters/PhysicsComponentAccessor.hpp>
+#include <glm/glm.hpp>
 
 
 namespace Omicron {
@@ -48,6 +49,19 @@ namespace Omicron {
 
     }
 
+    std::vector<float> PhysicsComponentAccessor::GetWorldPositionSet() {
+        auto trans = phys->GetBodyTransform();
+        std::vector<float> pos(3);
+        pos[0] = trans.getOrigin().x();
+        pos[1] = trans.getOrigin().y();
+        pos[2] = trans.getOrigin().z();
+        return pos;
+    }
+
+    float PhysicsComponentAccessor::GetWorldPosition(int val) {
+        return GetWorldPositionSet()[glm::clamp(val, 0, 2)];
+    }
+
     void PhysicsComponentAdapter::Register(const sel::State& state) {
         state["PhysicsComponent"].SetClass<PhysicsComponentAccessor>(
         "ClearForces", &PhysicsComponentAccessor::ClearForces,
@@ -58,7 +72,8 @@ namespace Omicron {
         "ApplyForce", &PhysicsComponentAccessor::ApplyForce,
         "ApplyImpulse", &PhysicsComponentAccessor::ApplyImpulse,
         "ApplyTorque", &PhysicsComponentAccessor::ApplyTorque,
-        "ApplyTorqueImpulse", &PhysicsComponentAccessor::ApplyTorqueImpulse
+        "ApplyTorqueImpulse", &PhysicsComponentAccessor::ApplyTorqueImpulse,
+        "GetWorldPosition", &PhysicsComponentAccessor::GetWorldPosition
         );
     }
 

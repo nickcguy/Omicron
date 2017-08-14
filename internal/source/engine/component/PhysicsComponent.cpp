@@ -62,10 +62,12 @@ namespace Omicron {
         btQuaternion rot = {quat.w, quat.x, quat.y, quat.z};
         btTransform transform(rot, pos);
 
-        shape = new btCompoundShape;
+//        shape = new btCompoundShape;
+//
+//        for(auto item : collisionShapes)
+//            ((btCompoundShape*)shape)->addChildShape(item.transform, item.shape);
 
-        for(auto item : collisionShapes)
-            shape->addChildShape(item.transform, item.shape);
+        shape = collisionShapes[0].shape;
 
         bool isDynamic = (mass != 0.f);
         btVector3 localInertia(0, 0, 0);

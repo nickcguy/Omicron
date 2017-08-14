@@ -52,7 +52,7 @@ namespace Omicron {
         virtual std::string Name() override;
 
     protected:
-        btCompoundShape* shape;
+        btCollisionShape* shape;
         float mass;
         PhysicsSystem* world;
         Body* body;

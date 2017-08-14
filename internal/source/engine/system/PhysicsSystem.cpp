@@ -31,8 +31,23 @@ namespace Omicron {
     }
 
     void PhysicsSystem::Update(float delta) {
-        auto entities = engine->GetEntitiesWith<PhysicsComponent>();
         world->stepSimulation(delta, 10);
+        auto entities = engine->GetEntitiesWith<PhysicsComponent>();
+
+        for(auto entity : entities) {
+            auto comp = entity->GetCastComponent<PhysicsComponent>();
+            btVector3 min;
+            btVector3 max;
+            comp->GetBody()->getAabb(min, max);
+
+            engine->debugLines.push_back(new DebugLine(
+            {min.x(), min.y(), min.z()}, // World start
+            {max.x(), max.y(), max.z()}, // World end
+            {1.f, 0.f, 1.f},
+            {0.f, 1.f, 1.f},
+            0.01f));
+
+        }
     }
 
     void PhysicsSystem::Destroy() {

@@ -214,4 +214,8 @@ namespace Omicron {
         samplers = other->samplers;
         fileContents = other->fileContents;
     }
+
+    const std::map<std::string, Texture*>& OmicronMaterial::GetSamplers() const {
+        return samplers;
+    }
 }

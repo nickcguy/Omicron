@@ -35,12 +35,12 @@ namespace Omicron {
 
         inline void Invoke(float delta, OmicronEngineAccessor world, OmicronEntityAccessor entity, int argC, void** argV) {
                 switch(argC) {
-                    case 0: funcRef(delta, world, entity); break;
-                    case 1: funcRef(delta, world, entity, argV[0]); break;
-                    case 2: funcRef(delta, world, entity, argV[0], argV[1]); break;
-                    case 3: funcRef(delta, world, entity, argV[0], argV[1], argV[2]); break;
-                    case 4: funcRef(delta, world, entity, argV[0], argV[1], argV[2], argV[3]); break;
-                    case 5: funcRef(delta, world, entity, argV[0], argV[1], argV[2], argV[3], argV[4]); break;
+                    case 0: funcRef(delta, &world, &entity); break;
+                    case 1: funcRef(delta, &world, &entity, argV[0]); break;
+                    case 2: funcRef(delta, &world, &entity, argV[0], argV[1]); break;
+                    case 3: funcRef(delta, &world, &entity, argV[0], argV[1], argV[2]); break;
+                    case 4: funcRef(delta, &world, &entity, argV[0], argV[1], argV[2], argV[3]); break;
+                    case 5: funcRef(delta, &world, &entity, argV[0], argV[1], argV[2], argV[3], argV[4]); break;
 //                    case 6: funcRef(argV[0], argV[1], argV[2], argV[3], argV[4], argV[5]); break;
 //                    case 7: funcRef(argV[0], argV[1], argV[2], argV[3], argV[4], argV[5], argV[6]); break;
 //                    case 8: funcRef(argV[0], argV[1], argV[2], argV[3], argV[4], argV[5], argV[6], argV[7]); break;

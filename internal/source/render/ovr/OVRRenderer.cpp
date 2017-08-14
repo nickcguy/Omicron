@@ -94,8 +94,7 @@ namespace Omicron {
                 eyeRenderTexture[eye] = new TextureBuffer(session, true, true, idealTexSize, 1, NULL, 1);
                 eyeDepthBuffer[eye] = new DepthBuffer(eyeRenderTexture[eye]->GetSize(), 0);
 
-                fboRenderTexture[eye] = new TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1);
-                fboAlphaRenderTexture[eye] = new TextureBuffer(session, true, false, fboRenderTexture[eye]->GetSize(), 1, NULL, 1);
+                fboRenderTexture[eye] = new TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1, 5);
                 fboDepthBuffer[eye] = new DepthBuffer(fboRenderTexture[eye]->GetSize(), 0);
             }
 
@@ -348,59 +347,14 @@ namespace Omicron {
                 OVR::Matrix4f view = OVR::Matrix4f::LookAtRH(shiftedEyePos, shiftedEyePos + finalForward, finalUp);
 
                 fboRenderTexture[eye]->SetAndClearRenderSurface(fboDepthBuffer[eye]);
-                for(RenderCommand cmd : solidCmds) {
-                    auto mtl = mtlManager.GetMaterial(cmd.material, cmd.materialInstance, true);
-                    mtl->SetUniforms(cmd.uniforms);
-                    PostIncludes(mtl);
-
-                    glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*) &view);
-                    glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*) &proj);
-
-                    mtl->GetShader().SetMatrix4("model", cmd.model);
-                    mtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
-                    switch(cmd.type) {
-                        case VERTEX:
-                        case POINTCLOUD:
-                            glBindVertexArray(cmd.VAO);
-                            DrawArrays(cmd.primitive, cmd.offset, cmd.size);
-                            break;
-                        case INDEXED:
-                            glBindVertexArray(cmd.VAO);
-                            DrawElements(cmd.primitive, cmd.size, cmd.indexType, (void*) cmd.offset);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-//                fboRenderTexture[eye]->UnsetRenderSurface();
-
-//                fboAlphaRenderTexture[eye]->SetAndClearRenderSurface(fboDepthBuffer[eye], false);
+                glClearColor(eye, 1-eye, 0.f, 1.f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                for(RenderCommand cmd : solidCmds)
+                    Render(cmd, proj, view);
                 glDepthMask(GL_FALSE);
                 glBlendFunc(GL_ONE, GL_ONE);
-                for(RenderCommand cmd : alphaCmds) {
-                    auto mtl = mtlManager.GetMaterial(cmd.material, cmd.materialInstance, true);
-                    mtl->SetUniforms(cmd.uniforms);
-                    PostIncludes(mtl);
-
-                    glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*) &view);
-                    glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*) &proj);
-
-                    mtl->GetShader().SetMatrix4("model", cmd.model);
-                    mtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
-                    switch(cmd.type) {
-                        case VERTEX:
-                        case POINTCLOUD:
-                            glBindVertexArray(cmd.VAO);
-                            DrawArrays(cmd.primitive, cmd.offset, cmd.size);
-                            break;
-                        case INDEXED:
-                            glBindVertexArray(cmd.VAO);
-                            DrawElements(cmd.primitive, cmd.size, cmd.indexType, (void*) cmd.offset);
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                for(RenderCommand cmd : alphaCmds)
+                    Render(cmd, proj, view);
                 glDepthMask(GL_TRUE);
                 fboRenderTexture[eye]->UnsetRenderSurface();
 
@@ -415,19 +369,24 @@ namespace Omicron {
                 glClearColor(eye, 1-eye, 0.0, 1.0);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, fboRenderTexture[eye]->texId);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, fboAlphaRenderTexture[eye]->texId);
-                quadMtl->GetShader().SetInteger("image", 0);
-                quadMtl->GetShader().SetInteger("alpha", 1);
-                quadMtl->GetShader().SetFloat("alphaScale", 10);
+
+                const char* uniformNames[] = {
+                    "AlbedoSpec",
+                    "Normal",
+                    "MetRouAo",
+                    "Position",
+                    "W_TexCoords"
+                };
+
+                for(int i = 0; i < 5; i++) {
+                    glActiveTexture(GL_TEXTURE0 + i);
+                    glBindTexture(GL_TEXTURE_2D, fboRenderTexture[eye]->texIds[i]);
+                    quadMtl->GetShader().SetInteger(uniformNames[i], i);
+                }
+                quadMtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
                 primitiveRenderer.RenderQuad();
 
-
-
                 eyeRenderTexture[eye]->UnsetRenderSurface();
-
                 eyeRenderTexture[eye]->Commit();
             }
         }
@@ -458,30 +417,8 @@ namespace Omicron {
                 OVR::Matrix4f proj = ovrMatrix4f_Projection(desc.DefaultEyeFov[eye], 0.1f, 1000.f, ovrProjection_None);
                 OVR::Matrix4f view = OVR::Matrix4f::LookAtRH(shiftedEyePos, shiftedEyePos + finalForward, finalUp);
 
-                for(RenderCommand cmd : cmds) {
-                    auto mtl = mtlManager.GetMaterial(cmd.material, cmd.materialInstance, true);
-                    mtl->SetUniforms(cmd.uniforms);
-                    PostIncludes(mtl);
-
-                    glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*) &view);
-                    glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*) &proj);
-
-                    mtl->GetShader().SetMatrix4("model", cmd.model);
-                    mtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
-                    switch(cmd.type) {
-                        case VERTEX:
-                        case POINTCLOUD:
-                            glBindVertexArray(cmd.VAO);
-                            glDrawArrays(cmd.primitive, cmd.offset, cmd.size);
-                            break;
-                        case INDEXED:
-                            glBindVertexArray(cmd.VAO);
-                            glDrawElements(cmd.primitive, cmd.size, cmd.indexType, (void*) cmd.offset);
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                for(RenderCommand cmd : cmds)
+                    Render(cmd, proj, view);
 
                 eyeRenderTexture[eye]->UnsetRenderSurface();
 
@@ -490,32 +427,53 @@ namespace Omicron {
             }
         }
 
+        void OVRRenderer::Render(RenderCommand cmd, OVR::Matrix4f& proj, OVR::Matrix4f& view, bool toDeferred) {
+            auto mtl = mtlManager.GetMaterial(cmd.material, cmd.materialInstance, true);
+
+
+            if(toDeferred != (glfwGetKey(context->GetWindow(), GLFW_KEY_G) == GLFW_PRESS)) {
+                auto deferredMtl = mtlManager.GetMaterialBase("Deferred", true);
+                auto samplers = mtl->GetSamplers();
+                deferredMtl->SetUniforms();
+//                PostIncludes(deferredMtl);
+
+                int index = 0;
+                for(auto pair : samplers) {
+                    glActiveTexture(GL_TEXTURE0 + index);
+                    pair.second->Bind();
+                    deferredMtl->GetShader().SetInteger((pair.first + "Map").c_str(), index);
+                    index++;
+                }
+
+                glUniformMatrix4fv(glGetUniformLocation(deferredMtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*) &view);
+                glUniformMatrix4fv(glGetUniformLocation(deferredMtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*) &proj);
+
+                deferredMtl->GetShader().SetMatrix4("model", cmd.model);
+                deferredMtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
+            }else{
+                mtl->SetUniforms();
+                PostIncludes(mtl);
+
+                glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*) &view);
+                glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*) &proj);
+
+                mtl->GetShader().SetMatrix4("model", cmd.model);
+                mtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
+            }
+
+            glBindVertexArray(cmd.VAO);
+            switch(cmd.type) {
+                case VERTEX:
+                case POINTCLOUD:
+                    DrawArrays(cmd.primitive, cmd.offset, cmd.size);
+                    break;
+                case INDEXED:
+                    DrawElements(cmd.primitive, cmd.size, cmd.indexType, (void*) cmd.offset);
+                    break;
+                default:
+                    break;
+            }
+        }
+
     }
-
-
-    /*
-     * for(RenderCommand cmd : cmds) {
-                        auto mtl = mtlManager.GetMaterial(cmd.material);
-                        mtl->SetUniforms();
-                        PostIncludes(mtl);
-
-                        glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*)&view);
-                        glUniformMatrix4fv(glGetUniformLocation(mtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*)&proj);
-
-                        mtl->GetShader().SetMatrix4("model", cmd.model);
-                        mtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
-                        switch(cmd.type) {
-                            case VERTEX: case POINTCLOUD:
-                                glBindVertexArray(cmd.VAO);
-                                glDrawArrays(cmd.primitive, cmd.offset, cmd.size);
-                                break;
-                            case INDEXED:
-                                glBindVertexArray(cmd.VAO);
-                                glDrawElements(cmd.primitive, cmd.size, cmd.indexType, (void*) cmd.offset);
-                                break;
-                            default: break;
-                        }
-                    }
-     */
-
 }

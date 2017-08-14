@@ -28,6 +28,9 @@ namespace Omicron {
         void ApplyTorque(glm::vec3 torque);
         void ApplyTorqueImpulse(glm::vec3 torque);
 
+        std::vector<float> GetWorldPositionSet();
+        float GetWorldPosition(int val);
+
     protected:
         PhysicsComponent* phys = nullptr;
     };

@@ -20,6 +20,29 @@ using namespace tinyxml2;
 
 namespace Omicron {
 
+    namespace {
+        std::vector<IComponentFactory*>& GetFactories() {
+            static std::vector<IComponentFactory*> factories;
+            return factories;
+        }
+    }
+
+    IComponentFactory* EngineLoader::GetComponentFactory(std::string name) {
+        for(auto fac : GetFactories()) {
+            if(fac->Name() == name)
+                return fac;
+        }
+        return nullptr;
+    }
+
+    void EngineLoader::AddComponentFactory(IComponentFactory* fac) {
+        std::string name = fac->Name();
+        auto existing = GetComponentFactory(name);
+        if(existing != nullptr)
+            GetFactories().erase(std::remove(GetFactories().begin(), GetFactories().end(), existing), GetFactories().end());
+        GetFactories().push_back(fac);
+    }
+
     void EngineLoader::LoadIntoEngine(std::string file, OmicronEngine* engine) {
         XMLDocument doc;
         XMLError err = doc.LoadFile(file.c_str());
@@ -96,12 +119,16 @@ namespace Omicron {
 
         if(type == "PhysicsSystem") {
             XMLElement* propChild = element->FirstChildElement("Property");
-            std::string propName = propChild->Attribute("name");
-            glm::vec3 gravity(0.f, 9.81f, 0.f);
-            if(propName == "Gravity") {
-                propChild->QueryFloatAttribute("x", &gravity.x);
-                propChild->QueryFloatAttribute("y", &gravity.y);
-                propChild->QueryFloatAttribute("z", &gravity.z);
+            glm::vec3 gravity(0.f, -9.81f, 0.f);
+
+            while(propChild) {
+                std::string propName = propChild->Attribute("name");
+                if(propName == "Gravity") {
+                    propChild->QueryFloatAttribute("x", &gravity.x);
+                    propChild->QueryFloatAttribute("y", &gravity.y);
+                    propChild->QueryFloatAttribute("z", &gravity.z);
+                }
+                propChild = propChild->NextSiblingElement("Property");
             }
             engine->AddSystem(new PhysicsSystem(gravity));
             return;
@@ -226,6 +253,12 @@ namespace Omicron {
     void EngineLoader::LoadComponent(XMLElement* element, OmicronEntity* entity, OmicronEngine* engine) {
         std::string type = Attribute(element, "type");
 
+        auto fac = GetComponentFactory(type);
+        if(fac) {
+            fac->Load(element, entity, engine);
+            return;
+        }
+
         if(type == "MeshComponent") {
             bool isPrimitive = false;
             std::string path = Attribute(element, "path");
@@ -246,81 +279,6 @@ namespace Omicron {
                 entity->SetComponent<MeshComponent>(MeshComponent::FromPrimitive(path, params));
             else entity->SetComponent<ModelComponent>(new ModelComponent(path));
             return;
-        }
-
-        if(type == "ScriptComponent") {
-            XMLElement* scriptElement = element->FirstChildElement("Script");
-            if(!scriptElement) {
-                printf("[ERROR] No <Script> element found\n");
-                return;
-            }
-
-            std::string path = Attribute(scriptElement, "path");
-            std::string script;
-            if(path.empty())
-                script = scriptElement->GetText();
-            else script = Files::ReadFile(path);
-//            lua_State* L = nullptr;
-//            if(path.empty())
-//                L = scriptHost->ExecuteScript(scriptElement->GetText());
-//            else L = scriptHost->LoadAndExecuteScript(path);
-
-//            DEBUG_PRINT(luabridge::LuaRef exports = luabridge::getGlobal(L, "Exports"));
-//            if(exports.isTable()) {
-                // TODO support nested function structures
-            XMLElement* bindings = element->FirstChildElement("Bindings");
-            if(!bindings) {
-                printf("[ERROR] No script bindings found\n");
-                return;
-            }
-            XMLElement* binding = bindings->FirstChildElement("Binding");
-            ScriptComponent* component = new ScriptComponent;
-            component->script = script;
-            std::string event;
-            std::string func;
-            while(binding) {
-                event = binding->Attribute("event");
-                func = binding->Attribute("function");
-                component->scriptRefInfos.push_back(ScriptRefInfo(event, func));
-                binding = binding->NextSiblingElement("Binding");
-            }
-            entity->SetComponent<ScriptComponent>(component);
-            return;
-        }
-
-        if(type == "PhysicsComponent") {
-            bool match = true;
-            element->QueryBoolAttribute("match", &match);
-            bool kinematic = false;
-            element->QueryBoolAttribute("kinematic", &kinematic);
-            float mass = 0.0f;
-            element->QueryFloatAttribute("mass", &mass);
-            if(!match) {
-                printf("[WARN] Non-matching physics component not yet supported, forcing mesh match...\n");
-                match = true;
-            }
-
-            if(match) {
-                OmicronSystem* system = engine->GetSystem("Physics");
-                if(!system) {
-                    printf("[ERROR] Unable to find physics system\n");
-                    return;
-                }
-
-                if(PhysicsSystem* phys = dynamic_cast<PhysicsSystem*>(system)) {
-                    PhysicsComponent* physicsComponent = new PhysicsComponent(phys);
-                    entity->SetComponent<PhysicsComponent>(physicsComponent);
-                    if(match)
-                        physicsComponent->MatchEntityMesh();
-                    // TODO implement kinematic simulation
-//                    if(kinematic)
-//                        physicsComponent->GetBody()->setCollisionFlags(physicsComponent->GetBody()->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
-                    physicsComponent->AddToWorld(mass);
-                }else{
-                    printf("[ERROR] Unable to cast detected system to PhysicsSystem\n");
-                    return;
-                }
-            }
         }
 
         if(type == "MaterialComponent") {

@@ -50,27 +50,28 @@ namespace Omicron {
 
         struct TextureBuffer
         {
-            ovrSession          Session;
+            ovrSession           Session;
             ovrTextureSwapChain  TextureChain;
-            GLuint              texId;
-            GLuint              fboId;
-            Sizei               texSize;
+            std::vector<GLuint>  texIds;
+            GLuint               fboId;
+            Sizei                texSize;
+            int                  texCount;
 
-            TextureBuffer(ovrSession session, bool rendertarget, bool displayableOnHmd, Sizei size, int mipLevels, unsigned char * data, int sampleCount) :
+            TextureBuffer(ovrSession session, bool rendertarget, bool displayableOnHmd, Sizei size, int mipLevels, unsigned char * data, int sampleCount, int texCount = 1) :
             Session(session),
             TextureChain(nullptr),
-            texId(0),
+            texIds(),
             fboId(0),
-            texSize(0, 0)
+            texSize(size)
             {
                 UNREFERENCED_PARAMETER(sampleCount);
 
                 assert(sampleCount <= 1); // The code doesn't currently handle MSAA textures.
 
-                texSize = size;
+                this->texCount = texCount = (displayableOnHmd ? 1 : texCount);
+                this->texIds.resize(this->texCount);
 
-                if (displayableOnHmd)
-                {
+                if (displayableOnHmd) {
                     // This texture isn't necessarily going to be a rendertarget, but it usually is.
                     assert(session); // No HMD? A little odd.
                     assert(sampleCount == 1); // ovr_CreateSwapTextureSetD3D11 doesn't support MSAA.
@@ -114,33 +115,30 @@ namespace Omicron {
                             }
                         }
                     }
-                }
-                else
-                {
-                    glGenTextures(1, &texId);
-                    glBindTexture(GL_TEXTURE_2D, texId);
+                }else{
+                    for(int i = 0; i < texCount; i++) {
+                        glGenTextures(1, &texIds[i]);
+                        glBindTexture(GL_TEXTURE_2D, texIds[i]);
 
-                    if (rendertarget)
-                    {
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                        if(rendertarget) {
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                        } else {
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                        }
+
+                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texSize.w, texSize.h, 0, GL_RGBA,
+                                     GL_FLOAT, data);
+
+                        if (mipLevels > 1)
+                            glGenerateMipmap(GL_TEXTURE_2D);
+
                     }
-                    else
-                    {
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-                    }
-
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, texSize.w, texSize.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-                }
-
-                if (mipLevels > 1)
-                {
-                    glGenerateMipmap(GL_TEXTURE_2D);
                 }
 
                 glGenFramebuffers(1, &fboId);
@@ -153,11 +151,7 @@ namespace Omicron {
                     ovr_DestroyTextureSwapChain(Session, TextureChain);
                     TextureChain = nullptr;
                 }
-                if (texId)
-                {
-                    glDeleteTextures(1, &texId);
-                    texId = 0;
-                }
+                glDeleteTextures(texCount, texIds.data());
                 if (fboId)
                 {
                     glDeleteFramebuffers(1, &fboId);
@@ -173,19 +167,20 @@ namespace Omicron {
             void SetAndClearRenderSurface(DepthBuffer* dbuffer, bool clearDepthBuffer = true)
             {
                 GLuint curTexId;
-                if (TextureChain)
-                {
+                glBindFramebuffer(GL_FRAMEBUFFER, fboId);
+
+                if (TextureChain) {
                     int curIndex;
                     ovr_GetTextureSwapChainCurrentIndex(Session, TextureChain, &curIndex);
                     ovr_GetTextureSwapChainBufferGL(Session, TextureChain, curIndex, &curTexId);
-                }
-                else
-                {
-                    curTexId = texId;
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, curTexId, 0);
+                    for(int i = 1; i < texCount; i++)
+                        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, texIds[i], 0);
+                }else{
+                    for(int i = 0; i < texCount; i++)
+                        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, texIds[i], 0);
                 }
 
-                glBindFramebuffer(GL_FRAMEBUFFER, fboId);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, curTexId, 0);
                 if(dbuffer) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dbuffer->texId, 0);
 
                 glViewport(0, 0, texSize.w, texSize.h);
@@ -205,10 +200,10 @@ namespace Omicron {
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             }
 
-            void UnsetRenderSurface()
-            {
+            void UnsetRenderSurface() {
                 glBindFramebuffer(GL_FRAMEBUFFER, fboId);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+                for(int i = 0; i < texCount; i++)
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, 0, 0);
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
             }
 
