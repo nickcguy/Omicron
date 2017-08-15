@@ -11,13 +11,22 @@ namespace Omicron {
 
     void FlatRenderer::Init() {
 
+        mtlManager.SetOnNewMaterial([=](OmicronMaterial* mtl) {
+            printf("New material registered: %s\n", mtl->GetName().c_str());
+            mtl->InvalidateSamplers();
+            mtl->GetShader().CompileFromSources();
+            mtl->SetReady(true);
+        });
+
         OmicronMaterial* defMtl = new OmicronMaterial;
         defMtl->SetName("Default");
-        defMtl->GetShader().CompileFromFile("assets/shaders/basic/basic.vert", "assets/shaders/basic/basic.frag");
+        defMtl->GetShader().CompileFromFile("assets/shaders/ovr/deferred_pbr/basic.vert", "assets/shaders/ovr/deferred_pbr/basic.frag");
+        defMtl->SetReady(true);
 
         OmicronMaterial* quadMtl = new OmicronMaterial;
         quadMtl->SetName("Quad");
-        quadMtl->GetShader().CompileFromFile("assets/shaders/basic/quad.vert", "assets/shaders/basic/quad.frag");
+        quadMtl->GetShader().CompileFromFile("assets/shaders/ovr/deferred_pbr/quad.vert", "assets/shaders/ovr/deferred_pbr/quad.frag");
+        quadMtl->SetReady(true);
 
         mtlManager.SetDefaultMaterial(defMtl);
         mtlManager.RegisterMaterial(quadMtl);
@@ -48,7 +57,17 @@ namespace Omicron {
         context->GetCamera()->updateCameraVectors();
         glm::mat4 view = context->GetCamera()->GetViewMatrix();
 
+        std::vector<RenderCommand> solidCmds;
+        std::vector<RenderCommand> alphaCmds;
+
         for(RenderCommand cmd : cmds) {
+            if(cmd.alpha == 1.0)
+                solidCmds.push_back(cmd);
+            else alphaCmds.push_back(cmd);
+        }
+
+        fboRenderTexture->SetAndClearRenderSurface(fboDepthTexture);
+        for(RenderCommand cmd : solidCmds) {
             auto mtl = mtlManager.GetMaterialBase(cmd.material, true);
             mtl->SetUniforms(cmd.uniforms);
             mtl->GetShader().SetMatrix4("model", cmd.model);
@@ -57,16 +76,79 @@ namespace Omicron {
             mtl->GetShader().SetMatrix4("projection", projection);
             BaseRenderer::Render(cmd);
         }
+        glDepthMask(GL_FALSE);
+        for(RenderCommand cmd : alphaCmds) {
+            auto mtl = mtlManager.GetMaterialBase(cmd.material, true);
+            mtl->SetUniforms(cmd.uniforms);
+            mtl->GetShader().SetMatrix4("model", cmd.model);
+            mtl->GetShader().SetInteger("outputbuffer", bufferType);
+            mtl->GetShader().SetMatrix4("view", view);
+            mtl->GetShader().SetMatrix4("projection", projection);
+            mtl->GetShader().SetFloat("alpha", cmd.alpha);
+            BaseRenderer::Render(cmd);
+        }
+        glDepthMask(GL_TRUE);
+        fboRenderTexture->UnsetRenderSurface();
+        screenRenderTexture->SetAndClearRenderSurface(nullptr);
+        auto quadMtl = mtlManager.GetMaterial("Quad", true);
+        quadMtl->GetShader().Use();
+        quadMtl->GetShader().SetInteger("outputBuffer", bufferType);
+        glDisable(GL_CULL_FACE);
+        const char* uniformNames[] = {
+        "AlbedoSpec",
+        "Normal",
+        "Metallic",
+        "Roughness",
+        "AO",
+        "Position"
+        };
+
+        for(int j = 0; j < 6; j++) {
+            glActiveTexture(GL_TEXTURE0 + j);
+            glBindTexture(GL_TEXTURE_2D, fboRenderTexture->texIds[j]);
+            quadMtl->GetShader().SetInteger(uniformNames[j], j);
+        }
+        quadMtl->GetShader().SetVector3f("viewPos", context->GetCamera()->Position);
+        primitiveRenderer.RenderQuad();
+        glEnable(GL_CULL_FACE);
+        screenRenderTexture->UnsetRenderSurface();
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, screenRenderTexture->fboId);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        int w = context->GetWidth();
+        int h = context->GetHeight();
+        glBlitFramebuffer(0, 0, w, h,
+                          0, 0, w, h,
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
     }
 
     void FlatRenderer::Resize(size_t width, size_t height) {
         if(width == 0 || height == 0) return;
         float aspect = (float)width / (float)height;
         this->projection = glm::perspective(glm::radians(60.f), aspect, 0.1f, 1024.f);
+
+        if(fboRenderTexture) {
+            CLEAR_PTR(fboRenderTexture);
+        }
+
+        if(fboDepthTexture) {
+            CLEAR_PTR(fboDepthTexture);
+        }
+
+        if(screenRenderTexture) {
+            CLEAR_PTR(screenRenderTexture);
+        }
+
+        fboRenderTexture = new ovr::TextureBuffer(nullptr, true, false, OVR::Sizei(width, height), 1, NULL, 1, 6);
+        fboDepthTexture = new ovr::DepthBuffer(fboRenderTexture->GetSize(), 1);
+        screenRenderTexture = new ovr::TextureBuffer(nullptr, true, false, OVR::Sizei(width, height), 1, NULL, 1);
     }
 
     void FlatRenderer::Shutdown() {
-
+        CLEAR_PTR(fboRenderTexture);
+        CLEAR_PTR(fboDepthTexture);
     }
 
 }

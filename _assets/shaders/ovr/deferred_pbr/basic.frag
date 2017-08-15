@@ -14,10 +14,8 @@ in vec3 Position;
 
 layout(location = 0) out vec4 albedo;
 layout(location = 1) out vec4 normal;
-layout(location = 2) out float metallic;
-layout(location = 3) out float roughness;
-layout(location = 4) out float ao;
-layout(location = 5) out vec4 position;
+layout(location = 2) out vec4 metRouAo;
+layout(location = 3) out vec4 position;
 
 uniform float UVScale = 1.0;
 
@@ -36,12 +34,13 @@ void main() {
     normal.rgb = texture(NormalMap, texCoords).rgb * WorldNormal;
     normal.a = 1.0;
 
-//    metRouAo.r = texture(MetallicMap, texCoords).r;
-//    metRouAo.g = texture(RoughnessMap, texCoords).r;
-//    metRouAo.b = texture(AmbientMap, texCoords).r;
+    metRouAo.r = texture(MetallicMap, texCoords).r;
+    metRouAo.g = texture(RoughnessMap, texCoords).r;
+    metRouAo.b = texture(AmbientMap, texCoords).r;
+    metRouAo.a = 1.0;
 
-    metallic = 0.4;
-    roughness = 0.7;
-    ao = 0.1;
+//    metallic = vec4(0.4, 0.4, 0.4, 1.0);
+//    roughness = vec4(vec3(0.7), 1.0);
+//    ao = vec4(vec3(0.1), 1.0);
 
 }

@@ -48,6 +48,7 @@
             <Components>
                 <Component type="MeshComponent" primitive="true" path="SPHERE" />
                 <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Brick Wall" dynamic="true" />
             </Components>
         </Entity>
 

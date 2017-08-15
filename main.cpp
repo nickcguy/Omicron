@@ -25,14 +25,14 @@ int main(int argc, char** argv) {
 
     for(int i = 0; i < argc; i++) {
         auto arg = argv[i];
-        if(strcmp(arg, OVR_FLAG))
+        if(strcmp(arg, OVR_FLAG) == 0)
             useOVR = true;
     }
 
     std::cout << "Press any key to continue...";
     std::cin.ignore();
     if(useOVR) {
-        printf("\"%s\" launch flag detected, initialising in OVR mode...\n", OVR_FLAG);
+        printf("\"%s\" launch flag detected, initialising in OVR mode... [%s]\n", OVR_FLAG, useOVR ? "true" : "false");
     }
     printf("Beginning startup...\n");
 

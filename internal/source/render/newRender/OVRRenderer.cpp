@@ -147,7 +147,7 @@ namespace Omicron {
                 OVR::Sizei idealTexSize = ovr_GetFovTextureSize(session, eyeRenderDesc[i].Eye, hmdDesc.DefaultEyeFov[i], 1);
                 eyeRenderTexture[i] = new ovr::TextureBuffer(session, true, true, idealTexSize, 1, NULL, 1);
                 eyeDepthBuffer[i] = new ovr::DepthBuffer(eyeRenderTexture[i]->GetSize(), 0);
-                fboRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1, 6);
+                fboRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1, 4);
                 fboDepthBuffer[i] = new ovr::DepthBuffer(fboRenderTexture[i]->GetSize(), 0);
             }
 
@@ -193,7 +193,7 @@ namespace Omicron {
         std::vector<RenderCommand> alphaCmds;
 
         for(RenderCommand cmd : cmds) {
-            if(cmd.alpha = 1.0)
+            if(cmd.alpha == 1.0)
                 solidCmds.push_back(cmd);
             else alphaCmds.push_back(cmd);
         }
@@ -251,13 +251,11 @@ namespace Omicron {
             const char* uniformNames[] = {
             "AlbedoSpec",
             "Normal",
-            "Metallic",
-            "Roughness",
-            "AO",
+            "MetRouAo",
             "Position"
             };
 
-            for(int j = 0; j < 6; j++) {
+            for(int j = 0; j < 4; j++) {
                 glActiveTexture(GL_TEXTURE0 + j);
                 glBindTexture(GL_TEXTURE_2D, fboRenderTexture[i]->texIds[j]);
                 quadMtl->GetShader().SetInteger(uniformNames[j], j);

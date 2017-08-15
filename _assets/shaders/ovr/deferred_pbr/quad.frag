@@ -4,9 +4,7 @@ out vec4 FinalColour;
 
 uniform sampler2D AlbedoSpec;
 uniform sampler2D Normal;
-uniform sampler2D Metallic;
-uniform sampler2D Roughness;
-uniform sampler2D AO;
+uniform sampler2D MetRouAo;
 uniform sampler2D Position;
 
 in vec2 TexCoords;
@@ -50,9 +48,9 @@ void main() {
 	float Specular  = albSpc.a;
     vec3 normal     = texture(Normal, texCoords).rgb;
 
-	float metallic  = texture(Metallic, texCoords).r;
-	float roughness = texture(Roughness, texCoords).r;
-	float Ambient   = texture(AO, texCoords).r;
+	float metallic  = texture(MetRouAo, texCoords).r;
+	float roughness = texture(MetRouAo, texCoords).g;
+	float Ambient   = texture(MetRouAo, texCoords).b;
 
 //    float metallic  = 0.4;
 //    float roughness = 0.7;
@@ -93,6 +91,10 @@ void main() {
 
 	vec3 ambient = vec3(0.03) * Diffuse;
 	vec3 colour = ambient + Lo;
+
+//	const float gamma = 2.2;
+//    colour = colour / (colour + vec3(1.0));
+//    colour = pow(colour, vec3(1.0 / gamma));
 
     if(outputBuffer == 2) {
         FinalColour = vec4(Diffuse, 1.0);

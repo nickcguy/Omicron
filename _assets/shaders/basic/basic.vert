@@ -28,7 +28,7 @@ void main() {
 	Position = worldPos.xyz;
 	TexCoords = texCoord;
 	Normal = normal;
-	WorldNormal = mat3(model) * normal;
+	WorldNormal = transpose(inverse(mat3(model))) * normal;
 	Colour = colour;
 
 }

@@ -5,6 +5,7 @@
 #ifndef OMICRONRENDER_FLATRENDERER_HPP
 #define OMICRONRENDER_FLATRENDERER_HPP
 
+#include <render/ovr/TextureBuffer.hpp>
 #include "BaseRenderer.hpp"
 
 namespace Omicron {
@@ -25,6 +26,9 @@ namespace Omicron {
 
     protected:
         glm::mat4 projection;
+        ovr::TextureBuffer* fboRenderTexture = nullptr;
+        ovr::DepthBuffer* fboDepthTexture = nullptr;
+        ovr::TextureBuffer* screenRenderTexture = nullptr;
     };
 
 }
