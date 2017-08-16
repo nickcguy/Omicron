@@ -1,11 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Engine>
     <World>
-
+        <Cubemap root="externalAssets/Cubemap/skybox/">
+            <Panel path="right.jpg"/>
+            <Panel path="left.jpg"/>
+            <Panel path="top.jpg"/>
+            <Panel path="bottom.jpg"/>
+            <Panel path="back.jpg"/>
+            <Panel path="front.jpg"/>
+            <DayNight path="dayNight.png" />
+        </Cubemap>
     </World>
     <Systems>
         <System type="ScriptHost" />
         <System type="PhysicsSystem" />
+        <!--<System type="PsychicInteractionSystem" />-->
     </Systems>
     <Entities>
 
@@ -19,6 +28,74 @@
                 <Component type="MaterialComponent" material="Oak Floor" >
                     <Uniforms>
                         <Uniform name="UVScale" value="50" />
+                        <Uniform name="Overlap" value="0.1" />
+                    </Uniforms>
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="wall">
+            <Transform>
+                <Translation x="10.0" />
+                <Scale y="10.0" z="10.0" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="CUBE" />
+                <Component type="PhysicsComponent" match="true" canSleep="false" />
+                <Component type="MaterialComponent" material="Oak Floor" >
+                    <Uniforms>
+                        <Uniform name="UVScale" value="5" />
+                        <Uniform name="Overlap" value="0.1" />
+                    </Uniforms>
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="wall">
+            <Transform>
+                <Translation x="-10.0" />
+                <Scale y="10.0" z="10.0" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="CUBE" />
+                <Component type="PhysicsComponent" match="true" canSleep="false" />
+                <Component type="MaterialComponent" material="Oak Floor" >
+                    <Uniforms>
+                        <Uniform name="UVScale" value="5" />
+                        <Uniform name="Overlap" value="0.1" />
+                    </Uniforms>
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="wall">
+            <Transform>
+                <Translation z="10.0" />
+                <Scale y="10.0" x="10.0" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="CUBE" />
+                <Component type="PhysicsComponent" match="true" canSleep="false" />
+                <Component type="MaterialComponent" material="Oak Floor" >
+                    <Uniforms>
+                        <Uniform name="UVScale" value="5" />
+                        <Uniform name="Overlap" value="0.1" />
+                    </Uniforms>
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="wall">
+            <Transform>
+                <Translation z="-10.0" />
+                <Scale y="10.0" x="10.0" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="CUBE" />
+                <Component type="PhysicsComponent" match="true" canSleep="false" />
+                <Component type="MaterialComponent" material="Oak Floor" >
+                    <Uniforms>
+                        <Uniform name="UVScale" value="5" />
                         <Uniform name="Overlap" value="0.1" />
                     </Uniforms>
                 </Component>
@@ -93,6 +170,78 @@
                 </Component>
                 <Component type="PhysicsComponent" match="true" mass="1.0" />
                 <Component type="MaterialComponent" material="Rusted Iron" alpha="0.5" />
+            </Components>
+        </Entity>
+
+        <Entity tags="light">
+            <Transform>
+                <Translation y="5.0" />
+            </Transform>
+            <Components>
+                <Component type="LightComponent" lightType="POINT">
+                    <Parameter name="constant" value="1.0" />
+                    <Parameter name="linear" value="0.7" />
+                    <Parameter name="quadratic" value="1.8" />
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="light">
+            <Transform>
+                <Translation y="3.0" z="7.4" />
+            </Transform>
+            <Components>
+                <Component type="LightComponent" lightType="POINT">
+                    <Parameter name="colour" r="1.0" g="0.0" b="0.0" />
+                    <Parameter name="constant" value="1.0" />
+                    <Parameter name="linear" value="0.7" />
+                    <Parameter name="quadratic" value="1.8" />
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="light">
+            <Transform>
+                <Translation y="3.0" x="4.2" />
+            </Transform>
+            <Components>
+                <Component type="LightComponent" lightType="POINT">
+                    <Parameter name="colour" r="0.0" g="1.0" b="0.0" />
+                    <Parameter name="constant" value="1.0" />
+                    <Parameter name="linear" value="0.7" />
+                    <Parameter name="quadratic" value="1.8" />
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="light">
+            <Transform>
+                <Translation y="1.0" x="-4.1" />
+            </Transform>
+            <Components>
+                <Component type="LightComponent" lightType="POINT">
+                    <Parameter name="colour" r="0.0" g="0.0" b="1.0" />
+                    <Parameter name="constant" value="1.0" />
+                    <Parameter name="linear" value="0.7" />
+                    <Parameter name="quadratic" value="1.8" />
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="light">
+            <Transform>
+                <Translation y="1.0" x="5" />
+            </Transform>
+            <Components>
+                <Component type="LightComponent" lightType="POINT">
+                    <Parameter name="colour" r="0.0" g="1.0" b="1.0" />
+                    <Parameter name="direction" z="1.0" />
+                    <Parameter name="cutoff" value="40" />
+                    <Parameter name="outercutoff" value="50" />
+                    <Parameter name="constant" value="1.0" />
+                    <Parameter name="linear" value="0.7" />
+                    <Parameter name="quadratic" value="1.8" />
+                </Component>
             </Components>
         </Entity>
 

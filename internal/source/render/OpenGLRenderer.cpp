@@ -44,7 +44,7 @@ namespace Omicron {
 
         mtlManager.RegisterMaterials();
         Utils::CheckErrors("RegisterMaterials");
-        lightData.lights.push_back(Light{ { 0.0f, 0.0f, 10.0f }, {150.f, 150.f, 150.f} });
+        lightData.lights.push_back(Light2{ { 0.0f, 0.0f, 10.0f }, {150.f, 150.f, 150.f} });
 
     }
 
@@ -141,7 +141,7 @@ namespace Omicron {
             if(include == "Lighting") {
 //                lightBuffer.Map();
                 for(int i = 0; i < lightData.lights.size(); i++) {
-                    Light light = lightData.lights[i];
+                    Light2 light = lightData.lights[i];
 
                     std::stringstream ss;
                     ss << "[" << i << "]";

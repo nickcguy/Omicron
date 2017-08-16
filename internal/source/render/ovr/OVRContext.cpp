@@ -49,6 +49,8 @@ namespace Omicron {
 
             auto headQuat = headPose.Rotation;
             headQuat.GetEulerAngles<OVR::Axis::Axis_X, OVR::Axis::Axis_Y, OVR::Axis::Axis_Z>(&camera->Yaw, &camera->Pitch, &camera->Roll);
+
+//            ((OVRRenderer*)renderer)->handEntities[]
         }
     }
 
@@ -75,6 +77,10 @@ namespace Omicron {
     void OVRContext::Render(float delta) {
         UpdateTrackingState();
         OpenGLContext::Render(delta);
+    }
+
+    void OVRContext::SetHandEntity(ovrHandType hand, OmicronEntity* entity) {
+        handEntities[hand] = entity;
     }
 
 

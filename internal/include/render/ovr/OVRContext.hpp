@@ -26,6 +26,9 @@ namespace Omicron {
         ovrTrackingState& GetTrackingState();
 
         glm::vec3 worldPosition = glm::vec3(0.f);
+
+        void SetHandEntity(ovrHandType_ type_, OmicronEntity* pEntity);
+
     protected:
         void UpdateTrackingState();
 
@@ -33,6 +36,8 @@ namespace Omicron {
         ovrGraphicsLuid luid;
         ovrHmdDesc hmdDesc;
         ovrTrackingState trackingState;
+
+        OmicronEntity* handEntities[2];
 
     };
 

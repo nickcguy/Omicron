@@ -24,6 +24,8 @@ namespace Omicron {
 
         virtual void Shutdown() override;
 
+        virtual void BlitToScreen(int targetFBO = 0);
+
     protected:
         glm::mat4 projection;
         ovr::TextureBuffer* fboRenderTexture = nullptr;

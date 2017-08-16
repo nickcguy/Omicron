@@ -113,14 +113,7 @@ namespace Omicron {
         glEnable(GL_CULL_FACE);
         screenRenderTexture->UnsetRenderSurface();
 
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, screenRenderTexture->fboId);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        int w = context->GetWidth();
-        int h = context->GetHeight();
-        glBlitFramebuffer(0, 0, w, h,
-                          0, 0, w, h,
-                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        BlitToScreen();
 
     }
 
@@ -149,6 +142,17 @@ namespace Omicron {
     void FlatRenderer::Shutdown() {
         CLEAR_PTR(fboRenderTexture);
         CLEAR_PTR(fboDepthTexture);
+    }
+
+    void FlatRenderer::BlitToScreen(int targetFBO) {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, screenRenderTexture->fboId);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, targetFBO);
+        int w = context->GetWidth();
+        int h = context->GetHeight();
+        glBlitFramebuffer(0, 0, w, h,
+                          0, 0, w, h,
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
 
 }

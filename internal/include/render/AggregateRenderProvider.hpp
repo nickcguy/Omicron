@@ -16,6 +16,8 @@ namespace Omicron {
 
         virtual void Renderables(std::vector<RenderCommand>& vector) override;
 
+        virtual void Lights(std::vector<Light>& vector) override;
+
     protected:
         std::vector<IRenderProvider*> providerPtrs;
     };

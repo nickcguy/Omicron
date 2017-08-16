@@ -8,6 +8,7 @@
 #include <string>
 #include <tinyxml2.h>
 #include <map>
+#include <render/newRender/BaseRenderer.hpp>
 #include "ComponentFactory.hpp"
 
 using namespace tinyxml2;
@@ -20,6 +21,8 @@ namespace Omicron {
 
     class EngineLoader {
     public:
+
+        static void SetRenderer(BaseRenderer* targetRenderer);
 
         static IComponentFactory* GetComponentFactory(std::string name);
         static void AddComponentFactory(IComponentFactory* fac);
@@ -40,7 +43,6 @@ namespace Omicron {
         static void LoadEntity(XMLElement* element, OmicronEngine* engine);
         static void LoadTransform(XMLElement* element, OmicronEntity* entity);
         static void LoadComponent(XMLElement* element, OmicronEntity* entity, OmicronEngine* engine);
-
     };
 
 }

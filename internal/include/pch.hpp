@@ -44,8 +44,12 @@ namespace Omicron {
 
 }
 
-#define DrawArrays(mode, first, count) IncrementDrawCalls(); glDrawArrays(mode, first, count);
-#define DrawElements(mode, count, type, indices) IncrementDrawCalls(); glDrawElements(mode, count, type, indices);
-#define SwapBuffers(win) ResetDrawCalls(); glfwSwapBuffers(win);
+//#define DrawArrays(mode, first, count) Omicron::IncrementDrawCalls(); glDrawArrays(mode, first, count);
+//#define DrawElements(mode, count, type, indices) Omicron::IncrementDrawCalls(); glDrawElements(mode, count, type, indices);
+//#define SwapBuffers(win) Omicron::ResetDrawCalls(); glfwSwapBuffers(win);
+//
+//#define DrawArrays(mode, first, count) glDrawArrays(mode, first, count);
+//#define DrawElements(mode, count, type, indices) glDrawElements(mode, count, type, indices);
+//#define SwapBuffers(win) glfwSwapBuffers(win);
 
 #endif //OMICRONRENDER_PCH_HPP

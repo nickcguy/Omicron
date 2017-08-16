@@ -8,6 +8,7 @@
 #include <sstream>
 #include <engine/input/OVRInputProvider.hpp>
 #include <engine/component/PhysicsComponent.hpp>
+#include <GLFW/glfw3.h>
 
 namespace Omicron {
 
@@ -100,7 +101,8 @@ namespace Omicron {
 
             ovrMirrorTextureDesc mirrorDesc;
             memset(&mirrorDesc, 0, sizeof(mirrorDesc));
-            glfwGetWindowSize(context->GetWindow(), &mirrorDesc.Width, &mirrorDesc.Height);
+            mirrorDesc.Width = context->GetWidth();
+            mirrorDesc.Height = context->GetHeight();
             mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
 
             ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirrorTexture);
@@ -254,7 +256,7 @@ namespace Omicron {
                 double sensorSampleTime;
                 ovr_GetEyePoses(session, frameIndex, ovrTrue, HmdToEyeOffset, EyeRenderPose, &sensorSampleTime);
 
-                if(useFBO || glfwGetKey(context->GetWindow(), GLFW_KEY_F) == GLFW_PRESS) RenderFBO(cmds, EyeRenderPose);
+                if(useFBO) RenderFBO(cmds, EyeRenderPose);
                 else RenderDirect(cmds, EyeRenderPose);
 
 
@@ -465,10 +467,10 @@ namespace Omicron {
             switch(cmd.type) {
                 case VERTEX:
                 case POINTCLOUD:
-                    DrawArrays(cmd.primitive, cmd.offset, cmd.size);
+                    glDrawArrays(cmd.primitive, cmd.offset, cmd.size);
                     break;
                 case INDEXED:
-                    DrawElements(cmd.primitive, cmd.size, cmd.indexType, (void*) cmd.offset);
+                    glDrawElements(cmd.primitive, cmd.size, cmd.indexType, (void*) cmd.offset);
                     break;
                 default:
                     break;

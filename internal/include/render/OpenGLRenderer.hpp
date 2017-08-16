@@ -29,13 +29,13 @@ namespace Omicron {
         float* lightData;
     };
 
-    struct Light {
+    struct Light2 {
         glm::vec3 position;
         glm::vec3 colour;
     };
 
     struct LightData {
-        std::vector<Light> lights;
+        std::vector<Light2> lights;
 
         inline SSBOLightData Flatten() {
             SSBOLightData data = {};
@@ -46,7 +46,7 @@ namespace Omicron {
 
             std::vector<float> lightData(data.lightCount * data.lightStride);
             int i = 0;
-            for(Light light : lights) {
+            for(Light2 light : lights) {
                 lightData[i++] = light.position.x;
                 lightData[i++] = light.position.y;
                 lightData[i++] = light.position.z;

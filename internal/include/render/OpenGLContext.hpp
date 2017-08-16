@@ -6,13 +6,14 @@
 #define OMICRONRENDER_OPENGLCONTEXT_HPP
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <render/camera/Camera.hpp>
 #include <render/camera/RollCamera.hpp>
 #include <render/ovr/OVRRenderer.hpp>
 #include <engine/input/InputProvider.hpp>
 #include <render/newRender/BaseRenderer.hpp>
+#include <GLFW/glfw3.h>
 #include "OpenGLRenderer.hpp"
+#include "BaseContext.hpp"
 
 #ifndef MAX_KEYS
 #define MAX_KEYS 1024
@@ -23,34 +24,29 @@ namespace Omicron {
     class IRenderProvider;
     class OmicronEngine;
 
-    class OpenGLContext {
+    class OpenGLContext : public BaseContext<GLFWwindow> {
     public:
 
         explicit OpenGLContext(GLFWwindow* window, IRenderProvider* renderProvider);
-        virtual void Init();
-        void SetActiveContext();
-        void Loop(OmicronEngine* engine = nullptr);
+        virtual void Init() override;
+        void SetActiveContext() override;
+        void Loop(OmicronEngine* engine = nullptr) override;
         void Terminate();
         void ProcessKeys(float delta);
-        virtual void SpawnRenderer();
-        virtual void SpawnCamera();
+        virtual void SpawnRenderer() override;
+        virtual void SpawnCamera() override;
 
-        virtual void Render(float delta);
+        virtual void Render(float delta) override;
+        virtual void SetWindowShouldClose(bool shouldClose);
 
-        Camera* GetCamera();
+        virtual Camera* GetCamera() override;
 
-        GLFWwindow* GetWindow() const;
-        BaseRenderer* renderer = nullptr;
-        InputProvider* inputProvider=  nullptr;
-
-        size_t GetWidth();
-        size_t GetHeight();
+        size_t GetWidth() override;
+        size_t GetHeight() override;
 
     protected:
         size_t windowWidth;
         size_t windowHeight;
-        GLFWwindow* window = nullptr;
-        IRenderProvider* renderProvider = nullptr;
         Camera* camera;
         bool firstMouse = true;
         double lastX = 0;
@@ -59,7 +55,7 @@ namespace Omicron {
 
         bool terminated = false;
 
-        virtual void Resize(int width, int height);
+        virtual void Resize(int width, int height) override;
 
     };
 }

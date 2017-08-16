@@ -41,6 +41,7 @@ namespace Omicron {
         void LoadFromMemory(std::string contents = "");
 
         void SetUniforms(std::map<std::string, float> externalUniforms = std::map<std::string, float>());
+        void ResetCommonUniforms();
         Shader& GetShader();
         std::vector<std::string> GetIncludes();
 

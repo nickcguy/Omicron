@@ -34,6 +34,8 @@ namespace Omicron {
 
         void BindSampler(std::map<std::string, Texture*> textures, OmicronMaterial* mtl, std::string name, int id);
 
+        void InitMirror(size_t width, size_t height);
+
         virtual void RenderFBO(std::vector<RenderCommand> cmds, ovrPosef* eyeRenderPoses);
         virtual void RenderMirror();
 
@@ -46,14 +48,16 @@ namespace Omicron {
 
         ovr::TextureBuffer* eyeRenderTexture[2] = {nullptr, nullptr};
         ovr::DepthBuffer* eyeDepthBuffer[2] = {nullptr, nullptr};
-        unsigned int mirrorFBO;
+        unsigned int mirrorFBO = 0;
         ovrMirrorTexture mirrorTexture = nullptr;
 
         ovr::TextureBuffer* fboRenderTexture[2] = {nullptr, nullptr};
-        ovr::TextureBuffer* fboAlphaRenderTexture[2] = {nullptr, nullptr};
+        ovr::TextureBuffer* skyRenderTexture[2] = {nullptr, nullptr};
+        ovr::TextureBuffer* fboLightRenderTexture[2] = {nullptr, nullptr};
         ovr::DepthBuffer* fboDepthBuffer[2] = {nullptr, nullptr};
 
         OVRContext* ovrContext; // pre-casted pointer to context
+        bool readyForMirror = false;
     };
 
 }

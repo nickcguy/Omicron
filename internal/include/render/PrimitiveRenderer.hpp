@@ -12,9 +12,14 @@ namespace Omicron {
         void RenderQuad();
         unsigned int BlankTexture();
 
+        void RenderSkybox();
+
     protected:
         unsigned int quadVAO = 0;
         unsigned int quadVBO = 0;
+
+        unsigned int skyboxVAO = 0;
+        unsigned int skyboxVBO = 0;
 
         unsigned int texId = 0;
     };

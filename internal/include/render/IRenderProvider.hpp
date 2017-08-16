@@ -6,6 +6,7 @@
 #define OMICRONRENDER_IRENDERPROVIDER_HPP
 
 #include <vector>
+#include <data/Light.hpp>
 #include "RenderCommand.hpp"
 
 namespace Omicron {
@@ -14,6 +15,8 @@ namespace Omicron {
     public:
         virtual std::vector<RenderCommand> Renderables();
         virtual void Renderables(std::vector<RenderCommand>&)=0;
+        virtual std::vector<Light> Lights();
+        virtual void Lights(std::vector<Light>&)=0;
     };
 
 }

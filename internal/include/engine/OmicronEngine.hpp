@@ -92,6 +92,8 @@ namespace Omicron {
 
         void Renderables(std::vector<RenderCommand>& cmds) override;
 
+        virtual void Lights(std::vector<Light>& vector) override;
+
         void SetTargetIPS(int targetIps);
         void CalculateInterval();
 

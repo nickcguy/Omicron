@@ -37,3 +37,5 @@
 cmake-build-relwithdebinfo
 /Build
 /_Working
+!/_runtime
+!/_runtime/*.exe

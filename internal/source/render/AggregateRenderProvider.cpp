@@ -21,4 +21,9 @@ namespace Omicron {
         for(auto providerPtr : providerPtrs)
             providerPtr->Renderables(cmds);
     }
+
+    void AggregateRenderProvider::Lights(std::vector<Light>& vector) {
+        for(auto providerPtr : providerPtrs)
+            providerPtr->Lights(vector);
+    }
 };

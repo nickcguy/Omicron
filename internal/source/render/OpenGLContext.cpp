@@ -7,6 +7,7 @@
 #endif
 
 #include <render/OpenGLContext.hpp>
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <render/IRenderProvider.hpp>
 #include <utils/TextUtils.hpp>
@@ -17,7 +18,7 @@
 
 namespace Omicron {
 
-    OpenGLContext::OpenGLContext(GLFWwindow* window, IRenderProvider* renderProvider) : window(window), renderProvider(renderProvider) {
+    OpenGLContext::OpenGLContext(GLFWwindow* window, IRenderProvider* renderProvider) : BaseContext(window, renderProvider) {
 
     }
 
@@ -45,6 +46,7 @@ namespace Omicron {
 //        #endif
 
         SpawnRenderer();
+        EngineLoader::SetRenderer(renderer);
         renderer->Init();
         SpawnCamera();
         camera->Position = {3.f, 3.f, 3.f};
@@ -187,7 +189,7 @@ namespace Omicron {
                << GetDrawCalls();
             glfwSetWindowTitle(window, ss.str().c_str());
 
-            SwapBuffers(window);
+            glfwSwapBuffers(window);
         }
 
         renderer->Shutdown();
@@ -205,7 +207,7 @@ namespace Omicron {
     void OpenGLContext::Terminate() {
         if(terminated) return;
         terminated = true;
-        glfwSetWindowShouldClose(window, GL_TRUE);
+        SetWindowShouldClose(true);
         glfwTerminate();
     }
 
@@ -220,9 +222,6 @@ namespace Omicron {
         return camera;
     }
 
-    GLFWwindow* OpenGLContext::GetWindow() const {
-        return window;
-    }
 
     size_t OpenGLContext::GetWidth() {
         return windowWidth;
@@ -238,6 +237,10 @@ namespace Omicron {
 
     void OpenGLContext::SpawnCamera() {
         camera = new Camera();
+    }
+
+    void OpenGLContext::SetWindowShouldClose(bool shouldClose) {
+        glfwSetWindowShouldClose(window, shouldClose);
     }
 
 };

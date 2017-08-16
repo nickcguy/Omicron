@@ -16,6 +16,7 @@
 #include <engine/input/OVRInputProvider.hpp>
 #include <script/ScriptHost.hpp>
 #include <data/assimp/AssimpModel.hpp>
+#include <engine/component/LightComponent.hpp>
 
 namespace Omicron {
 
@@ -284,6 +285,16 @@ namespace Omicron {
 
     int OmicronEngine::EntityCount() {
         return entities.size();
+    }
+
+    void OmicronEngine::Lights(std::vector<Light>& vector) {
+        FilteredVector<OmicronEntity*> entities = GetEntitiesWith<LightComponent>();
+        for(auto entity : entities) {
+            auto comp = entity->GetCastComponent<LightComponent>();
+            Light l(comp->lightData);
+            l.position += entity->transform.Translation;
+            vector.push_back(l);
+        }
     }
 
 

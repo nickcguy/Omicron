@@ -13,6 +13,7 @@
 #include <script/ScriptHost.hpp>
 #include <io/EngineLoader.hpp>
 #include <render/ovr/OVRContext.hpp>
+#include <render/newRender/OVRRenderer.hpp>
 
 #define USE_SOURCE_WORLD false
 
@@ -73,10 +74,11 @@ int main(int argc, char** argv) {
         context->Init();
         ((OVRContext*)context)->InitOVR();
     }else{
-
         context = new OpenGLContext(window, &renderProvider);
         context->Init();
     }
+
+
 
     DEBUG_PRINT(engineWrapper.GetChild()->SetInputProvider(context->inputProvider));
 
@@ -84,16 +86,16 @@ int main(int argc, char** argv) {
 
     #if !USE_SOURCE_WORLD
     EngineLoader::LoadIntoEngine("engines/testEngine.xml", engine);
-    if(ovr::OVRRenderer* renderer = dynamic_cast<ovr::OVRRenderer*>(context->renderer)) {
+    if(OVRContext* context = dynamic_cast<OVRContext*>(context)) {
         std::vector<OmicronEntity*> leftHandEntities = engine->GetTaggedEntities_All({"ovrHand", "ovrHand_Left"});
         if(!leftHandEntities.empty()) {
             auto e = leftHandEntities[0];
-            renderer->SetHandEntity(ovrHand_Left, e);
+            context->SetHandEntity(ovrHand_Left, e);
         }
         std::vector<OmicronEntity*> rightHandEntities = engine->GetTaggedEntities_All({"ovrHand", "ovrHand_Right"});
         if(!rightHandEntities.empty()) {
             auto e = rightHandEntities[0];
-            renderer->SetHandEntity(ovrHand_Right, e);
+            context->SetHandEntity(ovrHand_Right, e);
         }
 
     }

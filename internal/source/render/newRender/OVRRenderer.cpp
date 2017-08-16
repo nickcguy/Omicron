@@ -4,10 +4,12 @@
 
 #include <render/newRender/OVRRenderer.hpp>
 #include <render/OpenGLContext.hpp>
+#include <render/IRenderProvider.hpp>
 #include <render/ovr/OVRContext.hpp>
 #include <utils/TextUtils.hpp>
 #include <utils/MathsUtils.hpp>
 
+#define USE_PREPASS false
 namespace Omicron {
 
     OVRRenderer::OVRRenderer(OpenGLContext* context) : BaseRenderer(context) {}
@@ -21,6 +23,25 @@ namespace Omicron {
             mtl->SetReady(true);
         });
 
+        #if USE_PREPASS
+
+        OmicronMaterial* defMtl = new OmicronMaterial;
+        defMtl->SetName("PBRDefault");
+        defMtl->GetShader().CompileFromFile("assets/shaders/ovr/prepass/basic.vert", "assets/shaders/ovr/prepass/basic.frag");
+        defMtl->SetReady(true);
+
+        OmicronMaterial* quadMtl = new OmicronMaterial;
+        quadMtl->SetName("PBRQuad");
+        quadMtl->GetShader().CompileFromFile("assets/shaders/ovr/prepass/quad.vert", "assets/shaders/ovr/prepass/quad.frag");
+        quadMtl->SetReady(true);
+
+        OmicronMaterial* lightMtl = new OmicronMaterial;
+        lightMtl->SetName("PBRLight");
+        lightMtl->GetShader().CompileFromFile("assets/shaders/ovr/prepass/light.vert", "assets/shaders/ovr/prepass/light.frag");
+        lightMtl->SetReady(true);
+
+        #else
+
         OmicronMaterial* defMtl = new OmicronMaterial;
         defMtl->SetName("PBRDefault");
         defMtl->GetShader().CompileFromFile("assets/shaders/ovr/deferred_pbr/basic.vert", "assets/shaders/ovr/deferred_pbr/basic.frag");
@@ -31,8 +52,14 @@ namespace Omicron {
         quadMtl->GetShader().CompileFromFile("assets/shaders/ovr/deferred_pbr/quad.vert", "assets/shaders/ovr/deferred_pbr/quad.frag");
         quadMtl->SetReady(true);
 
+        #endif
+
         mtlManager.SetDefaultMaterial(defMtl);
         mtlManager.RegisterMaterial(quadMtl);
+
+        #if USE_PREPASS
+        mtlManager.RegisterMaterial(lightMtl);
+        #endif
 
         mtlManager.RegisterMaterials();
 
@@ -42,14 +69,14 @@ namespace Omicron {
     }
 
     void OVRRenderer::Update(float delta) {
-        mtlManager.Update(delta);
+        BaseRenderer::Update(delta);
         Utils::CheckErrors("mtlManager.Update(delta)");
     }
 
     void OVRRenderer::Render(std::vector<RenderCommand> cmds) {
         ovr_GetSessionStatus(ovrContext->GetSession(), &sessionStatus);
         if(sessionStatus.ShouldQuit) {
-            glfwSetWindowShouldClose(context->GetWindow(), true);
+            context->SetWindowShouldClose(true);
             return;
         }
         if(sessionStatus.ShouldRecenter)
@@ -95,7 +122,7 @@ namespace Omicron {
     }
 
     void OVRRenderer::Resize(size_t width, size_t height) {
-
+        InitMirror(width, height);
     }
 
     void OVRRenderer::Shutdown() {
@@ -149,6 +176,10 @@ namespace Omicron {
                 eyeDepthBuffer[i] = new ovr::DepthBuffer(eyeRenderTexture[i]->GetSize(), 0);
                 fboRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1, 4);
                 fboDepthBuffer[i] = new ovr::DepthBuffer(fboRenderTexture[i]->GetSize(), 0);
+                skyRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1);
+                #if USE_PREPASS
+                fboLightRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1);
+                #endif
             }
 
             Utils::CheckErrors("FBO");
@@ -156,21 +187,9 @@ namespace Omicron {
             layer.Viewport[ovrEye_Left]  = OVR::Recti(0, 0,                bufferSize.w / 2, bufferSize.h);
             layer.Viewport[ovrEye_Right] = OVR::Recti(bufferSize.w / 2, 0, bufferSize.w / 2, bufferSize.h);
 
-            ovrMirrorTextureDesc mirrorDesc = {};
-            memset(&mirrorDesc, 0, sizeof(mirrorDesc));
-            mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-            mirrorDesc.Width = context->GetWidth();
-            mirrorDesc.Height = context->GetHeight();
-            ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirrorTexture);
+            readyForMirror = true;
 
-            unsigned int texId;
-            ovr_GetMirrorTextureBufferGL(session, mirrorTexture, &texId);
-            glGenFramebuffers(1, &mirrorFBO);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, mirrorFBO);
-            glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
-            glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            Utils::CheckErrors("Mirror");
+            InitMirror(context->GetWidth(), context->GetHeight());
 
         }else throw std::runtime_error("OVRRenderer needs to be paired to an OVRContext");
 
@@ -191,6 +210,7 @@ namespace Omicron {
 
         std::vector<RenderCommand> solidCmds;
         std::vector<RenderCommand> alphaCmds;
+        std::vector<RenderCommand> lightCmds;
 
         for(RenderCommand cmd : cmds) {
             if(cmd.alpha == 1.0)
@@ -212,7 +232,6 @@ namespace Omicron {
             OVR::Matrix4f proj = ovrMatrix4f_Projection(ovrContext->GetHmdDesc().DefaultEyeFov[i], 0.1f, 1000.f, ovrProjection_None);
             OVR::Matrix4f view = OVR::Matrix4f::LookAtRH(shiftedEyePos, shiftedEyePos + finalForward, finalUp);
 
-
             Utils::CheckErrors("Pre fboRenderTexture[i]->SetAndClearRenderSurface(fboDepthBuffer[i])");
             fboRenderTexture[i]->SetAndClearRenderSurface(fboDepthBuffer[i]);
             Utils::CheckErrors("fboRenderTexture[i]->SetAndClearRenderSurface(fboDepthBuffer[i])");
@@ -227,26 +246,35 @@ namespace Omicron {
             for(RenderCommand cmd : alphaCmds)
                 Render(cmd, proj, view);
             Utils::CheckErrors("for(RenderCommand cmd : alphaCmds) Render(cmd, proj, view)");
-            glDepthMask(GL_TRUE);
             Utils::CheckErrors("glDepthMask(GL_TRUE)");
+
             fboRenderTexture[i]->UnsetRenderSurface();
             Utils::CheckErrors("fboRenderTexture[i]->UnsetRenderSurface()");
-        }
 
-        auto quadMtl = mtlManager.GetMaterial("PBRQuad", true);
-        quadMtl->GetShader().Use();
-        quadMtl->GetShader().SetInteger("outputBuffer", bufferType);
-        for(int i = ovrEye_Left; i <= ovrEye_Right; i++) {
-            eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr);
-            Utils::CheckErrors("eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr)");
+            glDepthMask(GL_TRUE);
+
+            skyRenderTexture[i]->SetAndClearRenderSurface(fboDepthBuffer[i], false);
+            glDepthFunc(GL_LEQUAL);
             glDisable(GL_CULL_FACE);
-            glDisable(GL_BLEND);
+            RenderCubemap(proj, view);
+            glEnable(GL_CULL_FACE);
+            glDepthFunc(GL_LESS);
+            skyRenderTexture[i]->UnsetRenderSurface();
+        }
+        auto lights = context->GetRenderProvider()->Lights();
 
-            Utils::CheckErrors("glDisable(GL_CULL_FACE)");
-            glClearColor(0.0, 0.0, 0.0, 1.0);
-            Utils::CheckErrors("glClearColor(0.0, 0.0, 0.0, 1.0)");
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            Utils::CheckErrors("glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)");
+        #if USE_PREPASS
+
+        auto lightMtl = mtlManager.GetMaterial("PBRLight", true);
+        lightMtl->GetShader().Use();
+        lightMtl->GetShader().SetInteger("outputBuffer", bufferType);
+
+        // TODO fix missing depth testing
+        for(int i = ovrEye_Left; i <= ovrEye_Right; i++) {
+            fboLightRenderTexture[i]->SetAndClearRenderSurface(fboDepthBuffer[i], false);
+            glDisable(GL_CULL_FACE);
+//            glDisable(GL_BLEND);
+            glDepthMask(GL_FALSE);
 
             const char* uniformNames[] = {
             "AlbedoSpec",
@@ -258,13 +286,117 @@ namespace Omicron {
             for(int j = 0; j < 4; j++) {
                 glActiveTexture(GL_TEXTURE0 + j);
                 glBindTexture(GL_TEXTURE_2D, fboRenderTexture[i]->texIds[j]);
-                quadMtl->GetShader().SetInteger(uniformNames[j], j);
+                lightMtl->GetShader().SetInteger(uniformNames[j], j);
             }
             Utils::CheckErrors("Texture binding");
 
             glm::vec3 viewPos = Utils::ConvertVec3(shiftedEyePositions[i]);
-            quadMtl->GetShader().SetVector3f("viewPos", viewPos);
+            lightMtl->GetShader().SetVector3f("viewPos", viewPos);
             Utils::CheckErrors("Viewpos binding");
+
+            for(int l0 = 0; l0 < lights.size(); l0+=16) {
+                for(int l1 = 0; l1 < 1 && l0 + l1 < lights.size(); l1++) {
+                    Light l = lights[l0 + l1];
+                    std::stringstream ss;
+                    ss << "lights[" << l1 << "]";
+                    std::string prefix = ss.str();
+                    lightMtl->GetShader().SetVector3f((prefix + ".Position").c_str(), l.position);
+                    lightMtl->GetShader().SetVector3f((prefix + ".Colour").c_str(), l.colour);
+                    lightMtl->GetShader().SetFloat((prefix + ".Constant").c_str(), l.constant);
+                    lightMtl->GetShader().SetFloat((prefix + ".Linear").c_str(), l.linear);
+                    lightMtl->GetShader().SetFloat((prefix + ".Quadratic").c_str(), l.quadratic);
+                    lightMtl->GetShader().SetFloat((prefix + ".Intensity").c_str(), l.intensity);
+                }
+                primitiveRenderer.RenderQuad();
+            }
+
+            Utils::CheckErrors("primitiveRenderer.RenderQuad()");
+            glEnable(GL_CULL_FACE);
+            Utils::CheckErrors("glEnable(GL_CULL_FACE)");
+            fboLightRenderTexture[i]->UnsetRenderSurface();
+        }
+        #endif
+
+        auto quadMtl = mtlManager.GetMaterial("PBRQuad", true);
+        quadMtl->GetShader().Use();
+        quadMtl->GetShader().SetInteger("outputBuffer", bufferType);
+        for(int i = ovrEye_Left; i <= ovrEye_Right; i++) {
+            eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr);
+            Utils::CheckErrors("eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr)");
+            glDisable(GL_CULL_FACE);
+            glDisable(GL_BLEND);
+
+            Utils::CheckErrors("glDisable(GL_CULL_FACE)");
+            glClearColor(0.0, 0.0, 0.0, 0.0);
+            Utils::CheckErrors("glClearColor(0.0, 0.0, 0.0, 1.0)");
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            Utils::CheckErrors("glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)");
+
+            glm::vec3 viewPos = Utils::ConvertVec3(shiftedEyePositions[i]);
+            quadMtl->GetShader().SetVector3f("viewPos", viewPos);
+
+            #if USE_PREPASS
+            const char* uniformNames[] = {
+            "AlbedoSpec",
+            "Lighting"
+            };
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, fboRenderTexture[i]->texIds[0]);
+            quadMtl->GetShader().SetInteger(uniformNames[0], 0);
+
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, fboLightRenderTexture[i]->texIds[0]);
+            quadMtl->GetShader().SetInteger(uniformNames[1], 1);
+
+            #else
+            const char* uniformNames[] = {
+            "AlbedoSpec",
+            "Normal",
+            "MetRouAo",
+            "Position"
+            };
+
+            int j = 0;
+            for(j = 0; j < 4; j++) {
+                glActiveTexture(GL_TEXTURE0 + j);
+                glBindTexture(GL_TEXTURE_2D, fboRenderTexture[i]->texIds[j]);
+                quadMtl->GetShader().SetInteger(uniformNames[j], j);
+            }
+
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(GL_TEXTURE_2D, skyRenderTexture[i]->texIds[0]);
+            quadMtl->GetShader().SetInteger("Skybox", 5);
+
+            static glm::vec3 zero(0.f);
+
+            for(int l0 = 0; l0 < lights.size(); l0++) {
+                std::stringstream ss;
+                ss << "lights[" << l0 << "]";
+                std::string prefix = ss.str();
+                if(l0 < lights.size()) {
+                    Light light = lights[l0];
+                    quadMtl->GetShader().SetInteger((prefix + ".Active").c_str(), GL_TRUE);
+                    quadMtl->GetShader().SetInteger((prefix + ".Type").c_str(), light.type);
+
+                    quadMtl->GetShader().SetVector3f((prefix + ".Position").c_str(), light.position);
+                    quadMtl->GetShader().SetVector3f((prefix + ".Direction").c_str(), light.direction);
+                    quadMtl->GetShader().SetVector3f((prefix + ".Colour").c_str(), light.colour);
+
+                    quadMtl->GetShader().SetFloat((prefix + ".Constant").c_str(), light.constant);
+                    quadMtl->GetShader().SetFloat((prefix + ".Linear").c_str(), light.linear);
+                    quadMtl->GetShader().SetFloat((prefix + ".Quadratic").c_str(), light.quadratic);
+
+                    quadMtl->GetShader().SetFloat((prefix + ".Cutoff").c_str(), light.cutoff);
+                    quadMtl->GetShader().SetFloat((prefix + ".OuterCutoff").c_str(), light.outerCutoff);
+
+                    quadMtl->GetShader().SetFloat((prefix + ".Intensity").c_str(), light.intensity);
+                }else{
+                    quadMtl->GetShader().SetInteger((prefix + ".Active").c_str(), GL_FALSE);
+                }
+            }
+
+            #endif
 
             primitiveRenderer.RenderQuad();
             Utils::CheckErrors("primitiveRenderer.RenderQuad()");
@@ -335,6 +467,30 @@ uniform sampler2D RoughnessMap;
         glActiveTexture(GL_TEXTURE0 + id);
         glBindTexture(GL_TEXTURE_2D, texId);
         mtl->GetShader().SetInteger((name + "Map").c_str(), id);
+    }
+
+    void OVRRenderer::InitMirror(size_t width, size_t height) {
+        if(!readyForMirror) return;
+
+        if(mirrorTexture) {
+            ovr_DestroyMirrorTexture(ovrContext->GetSession(), mirrorTexture);
+        }
+
+        ovrMirrorTextureDesc mirrorDesc = {};
+        memset(&mirrorDesc, 0, sizeof(mirrorDesc));
+        mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+        mirrorDesc.Width = width;
+        mirrorDesc.Height = height;
+        ovr_CreateMirrorTextureGL(ovrContext->GetSession(), &mirrorDesc, &mirrorTexture);
+
+        unsigned int texId;
+        ovr_GetMirrorTextureBufferGL(ovrContext->GetSession(), mirrorTexture, &texId);
+        if(mirrorFBO == 0) glGenFramebuffers(1, &mirrorFBO);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, mirrorFBO);
+        glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
+        glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        Utils::CheckErrors("Mirror");
     }
 
 

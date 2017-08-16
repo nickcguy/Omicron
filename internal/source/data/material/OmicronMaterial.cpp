@@ -27,6 +27,8 @@ namespace Omicron {
     void OmicronMaterial::SetUniforms(std::map<std::string, float> externalUniforms) {
         shader.Use();
 
+        ResetCommonUniforms();
+
         for(auto pair : uniforms)
             shader.SetFloat(pair.first.c_str(), pair.second);
 
@@ -217,5 +219,9 @@ namespace Omicron {
 
     const std::map<std::string, Texture*>& OmicronMaterial::GetSamplers() const {
         return samplers;
+    }
+
+    void OmicronMaterial::ResetCommonUniforms() {
+        shader.SetFloat("UVScale", 1.f);
     }
 }

@@ -76,15 +76,21 @@ namespace Omicron {
         return *this;
     }
 
+    GLFWWindowFactory& GLFWWindowFactory::SetVisible(bool visible) {
+        this->visible = visible;
+        return *this;
+    }
+
     GLFWwindow* GLFWWindowFactory::Build() {
 
         glfwInit();
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_CLIENT_API, api);
-        glfwWindowHint(GLFW_RESIZABLE, resizable ? 1 : 0);
+        glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, versionMajor);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, versionMinor);
         glfwWindowHint(GLFW_OPENGL_PROFILE, profile);
+        glfwWindowHint(GLFW_VISIBLE, visible ? GL_TRUE : GL_FALSE);
 
         GLFWwindow* window = glfwCreateWindow(width, height, title, monitor, share);
 

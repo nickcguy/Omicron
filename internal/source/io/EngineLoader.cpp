@@ -21,6 +21,9 @@ using namespace tinyxml2;
 namespace Omicron {
 
     namespace {
+
+        BaseRenderer* targetRenderer = nullptr;
+
         std::vector<IComponentFactory*>& GetFactories() {
             static std::vector<IComponentFactory*> factories;
             return factories;
@@ -72,6 +75,28 @@ namespace Omicron {
 
     void EngineLoader::LoadWorld(XMLElement* element, OmicronEngine* engine) {
         // TODO implement world options such as skybox and atmosphere settings
+        XMLElement* cubemapElement = element->FirstChildElement("Cubemap");
+        if(cubemapElement) {
+            std::string root = Attribute(cubemapElement, "root");
+            std::vector<std::string> faces(6);
+
+            XMLElement* panelElement = cubemapElement->FirstChildElement("Panel");
+            int i = 0;
+            while(panelElement && i < faces.size()) {
+                std::string path = Attribute(panelElement, "path");
+                faces[i++] = root + path;
+                panelElement = panelElement->NextSiblingElement("Panel");
+            }
+
+            targetRenderer->SetCubemap(faces);
+
+            XMLElement* dayNightElement = cubemapElement->FirstChildElement("DayNight");
+            if(dayNightElement) {
+                std::string path = Attribute(dayNightElement, "path");
+                targetRenderer->SetGradient(root+path);
+            }
+
+        }
     }
 
     void EngineLoader::LoadSystems(XMLElement* element, OmicronEngine* engine) {
@@ -310,6 +335,10 @@ namespace Omicron {
         if(val)
             temp = val;
         return temp;
+    }
+
+    void EngineLoader::SetRenderer(BaseRenderer* target) {
+        targetRenderer = target;
     }
 
 }

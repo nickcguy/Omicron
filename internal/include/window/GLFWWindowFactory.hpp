@@ -41,6 +41,7 @@ namespace Omicron {
 
         GLFWWindowFactory& SetUserPointer(void* ptr);
 
+        GLFWWindowFactory& SetVisible(bool visible);
 
 
         GLFWwindow* Build();
@@ -55,6 +56,7 @@ namespace Omicron {
         const char* title = "No title";
         GLFWmonitor* monitor = nullptr;
         GLFWwindow* share = nullptr;
+        bool visible = true;
 
         bool captureCursor = false;
         bool resizable = false;
