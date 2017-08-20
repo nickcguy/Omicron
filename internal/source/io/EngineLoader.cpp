@@ -15,6 +15,10 @@
 #include <data/assimp/AssimpModel.hpp>
 #include <script/ScriptComponent.hpp>
 #include <utils/FileUtils.hpp>
+#include <engine/system/ActionSystem.hpp>
+#include <engine/system/InputSystem.hpp>
+#include <engine/system/StickLocomotionSystem.hpp>
+#include <engine/system/OVRInteractionSystem.hpp>
 
 using namespace tinyxml2;
 
@@ -46,7 +50,7 @@ namespace Omicron {
         GetFactories().push_back(fac);
     }
 
-    void EngineLoader::LoadIntoEngine(std::string file, OmicronEngine* engine) {
+    void EngineLoader::LoadIntoEngine(std::string file, OmicronEngine* engine, std::function<void(void)> callback) {
         XMLDocument doc;
         XMLError err = doc.LoadFile(file.c_str());
         if(err == XML_SUCCESS) {
@@ -71,6 +75,8 @@ namespace Omicron {
         }else{
             printf("Failed to load file \"%s\", [%s]\n", file.c_str(), doc.ErrorName());
         }
+
+        if(callback) callback();
     }
 
     void EngineLoader::LoadWorld(XMLElement* element, OmicronEngine* engine) {
@@ -135,10 +141,30 @@ namespace Omicron {
             return;
         }
 
+        if(type == "ActionSystem") {
+            engine->AddSystem(new ActionSystem);
+            return;
+        }
+
         if(type == "ScriptHost") {
             ScriptHost* scriptHost = new ScriptHost;
-            scriptHost->InitLuaState();
             engine->AddSystem(scriptHost);
+            scriptHost->InitLuaState();
+            return;
+        }
+
+        if(type == "InputSystem") {
+            engine->AddSystem(new InputSystem);
+            return;
+        }
+
+        if(type == "OVRInteractionSystem") {
+            engine->AddSystem(new OVRInteractionSystem);
+            return;
+        }
+
+        if(type == "StickLocomotionSystem") {
+            engine->AddSystem(new StickLocomotionSystem);
             return;
         }
 

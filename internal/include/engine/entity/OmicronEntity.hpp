@@ -40,6 +40,10 @@ namespace Omicron {
 
         Transform transform;
 
+        Transform& GetTransform() {
+            return transform;
+        }
+
         template <typename T> inline T* GetCastComponent() {
             return static_cast<T*>(GetComponent<T>());
         }

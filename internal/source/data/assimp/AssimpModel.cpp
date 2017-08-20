@@ -5,6 +5,7 @@
 #include <vector>
 #include <render/shader/Shader.hpp>
 #include <data/assimp/AssimpModel.hpp>
+#include <data/material/MaterialManager.hpp>
 
 using namespace Assimp;
 
@@ -44,7 +45,38 @@ namespace Omicron {
         MeshComponent* ModelComponent::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 
             unsigned int i;
+            std::string mtlName = "";
             // TODO support textures
+
+            int mtlIndex = mesh->mMaterialIndex;
+            if(mtlIndex >= 0 && false) {
+                auto mtl = scene->mMaterials[mtlIndex];
+                if(mtl) {
+                    OmicronMaterial* material = new OmicronMaterial;
+                    if(mtl->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+                        aiString str;
+                        mtl->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+                        material->samplers["Albedo"] = new Texture();
+                        material->samplers["Albedo"]->LoadFromFile(str.C_Str());
+                    }
+                    if(mtl->GetTextureCount(aiTextureType_NORMALS) > 0) {
+                        aiString str;
+                        mtl->GetTexture(aiTextureType_NORMALS, 0, &str);
+                        material->samplers["Normal"] = new Texture();
+                        material->samplers["Normal"]->LoadFromFile(str.C_Str());
+                    }
+                    if(mtl->GetTextureCount(aiTextureType_SHININESS) > 0) {
+                        aiString str;
+                        mtl->GetTexture(aiTextureType_SHININESS, 0, &str);
+                        material->samplers["Metallic"] = new Texture();
+                        material->samplers["Metallic"]->LoadFromFile(str.C_Str());
+                    }
+                    material->SetName(std::string(mesh->mName.C_Str()) + "_mtl");
+                    mtlName = material->GetName();
+                    MaterialManager::GetActiveMaterialManager()->RegisterMaterial(material);
+
+                }
+            }
 
             std::vector<Vertex> vertices;
             std::vector<unsigned int> indices;
@@ -89,8 +121,21 @@ namespace Omicron {
                     indices.push_back(face.mIndices[j]);
             }
 
+            MeshComponent* meshComponent = nullptr;
 
-            return new MeshComponent(vertices, indices);
+            if(mesh->mPrimitiveTypes & aiPrimitiveType_POINT)
+                meshComponent = new MeshComponent(vertices, indices, GL_POINTS);
+            if(mesh->mPrimitiveTypes & aiPrimitiveType_LINE)
+                meshComponent = new MeshComponent(vertices, indices, GL_LINES);
+            if(meshComponent == nullptr)
+                meshComponent = new MeshComponent(vertices, indices, GL_TRIANGLES);
+
+            if(!mtlName.empty()) {
+                meshComponent->materialComponent = new MaterialComponent;
+                meshComponent->materialComponent->materialId = mtlName;
+            }
+
+            return meshComponent;
         }
 
         std::vector<Texture>

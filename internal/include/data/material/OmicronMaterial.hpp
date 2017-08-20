@@ -63,6 +63,9 @@ namespace Omicron {
         float GetUniform(std::string name);
         void SetUniform(std::string name, float value);
 
+        std::map<std::string, Texture*> samplers;
+
+
     protected:
         std::atomic_bool ready;
 
@@ -71,7 +74,6 @@ namespace Omicron {
         std::string hostPath;
         std::vector<std::string> includes;
         std::map<std::string, float> uniforms;
-        std::map<std::string, Texture*> samplers;
         std::deque<Omicron::InterpolatingValue*> interps;
 
         std::string fileContents;

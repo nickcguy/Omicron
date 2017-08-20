@@ -15,8 +15,10 @@ namespace Omicron {
     public:
         virtual std::vector<RenderCommand> Renderables();
         virtual void Renderables(std::vector<RenderCommand>&)=0;
-        virtual std::vector<Light> Lights();
-        virtual void Lights(std::vector<Light>&)=0;
+        virtual std::vector<Light*> Lights();
+        virtual void Lights(std::vector<Light*>&)=0;
+
+        virtual glm::vec3 Position()=0;
     };
 
 }

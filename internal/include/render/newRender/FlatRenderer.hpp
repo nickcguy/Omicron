@@ -31,6 +31,8 @@ namespace Omicron {
         ovr::TextureBuffer* fboRenderTexture = nullptr;
         ovr::DepthBuffer* fboDepthTexture = nullptr;
         ovr::TextureBuffer* screenRenderTexture = nullptr;
+
+        void Render(RenderCommand cmd, glm::mat4 proj, glm::mat4 view);
     };
 
 }

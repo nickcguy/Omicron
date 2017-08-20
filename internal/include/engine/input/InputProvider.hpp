@@ -5,6 +5,8 @@
 #ifndef OMICRONRENDER_INPUTPROVIDER_HPP
 #define OMICRONRENDER_INPUTPROVIDER_HPP
 
+#include <glm/vec3.hpp>
+
 namespace Omicron {
 
     enum InputProviderType {
@@ -20,6 +22,9 @@ namespace Omicron {
             return NONE;
         }
 
+        virtual glm::vec3 GetForwardVector()=0;
+        virtual glm::vec3 GetUpVector()=0;
+        virtual glm::vec3 GetRightVector()=0;
     };
 
 }

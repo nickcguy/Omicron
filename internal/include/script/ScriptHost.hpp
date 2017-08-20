@@ -6,25 +6,24 @@
 #define OMICRONRENDER_SCRIPTHOST_HPP
 
 #include <lua.hpp>
-
 #include <string>
 #include <vector>
 #include <engine/system/OmicronSystem.hpp>
 #include <mutex>
 #include <selene.h>
+#include <engine/EngineEventHandler.hpp>
+#include <engine/EventArgs.hpp>
 
 namespace Omicron {
 
     struct ScriptEvent {
         std::string eventName;
-
-        int argCount = 0;
-        void* args[7];
+        PrimitiveVariant data;
     };
 
     class IScriptable;
 
-    class ScriptHost : public OmicronSystem {
+    class ScriptHost : public OmicronSystem, public EngineEventListener {
     public:
 
         inline ScriptHost() {}
@@ -33,6 +32,7 @@ namespace Omicron {
         void RegisterScriptableAdapters();
         void InitLuaState();
 
+        virtual void Invoke(EngineEventHandler* handler, EventArgs args) override;
 
         sel::State* LoadAndExecuteScript(std::string fileName);
         sel::State* ExecuteScript(std::string script);

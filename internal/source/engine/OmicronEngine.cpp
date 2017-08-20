@@ -17,10 +17,11 @@
 #include <script/ScriptHost.hpp>
 #include <data/assimp/AssimpModel.hpp>
 #include <engine/component/LightComponent.hpp>
+#include <engine/component/PhysicsComponent.hpp>
 
 namespace Omicron {
 
-    OmicronEngine::OmicronEngine(int targetIps, OmicronEngineWrapper* owner) : targetIps(glm::clamp(targetIps, 1, 1000)), owner(owner) {
+    OmicronEngine::OmicronEngine(int targetIps, OmicronEngineWrapper* owner) : targetIps(glm::clamp(targetIps, 1, 1000)), owner(owner), eventHandler(new EngineEventHandler(this)) {
         if(owner)
             owner->SetChild(this);
     }
@@ -33,6 +34,8 @@ namespace Omicron {
             DELTA_TIMER_DEF
             Loop(delta);
         }
+
+        CLEAR_PTR(eventHandler);
     }
 
     void OmicronEngine::Loop(float delta) {
@@ -49,26 +52,12 @@ namespace Omicron {
 
     void OmicronEngine::Step(float delta) {
         currentIteration++;
+
+        eventHandler->Update();
+
         for(auto system : systems)
             if(system->IsActive())
             system->Update(delta);
-
-        if(inputProvider != nullptr) {
-            auto type = inputProvider->GetType();
-            if(type == OVR) {
-                auto input = static_cast<OVRInputProvider*>(inputProvider);
-                if(input->inputData.Buttons & ovrButton_A && !executed) {
-                    printf("Script execution request received\n");
-                    executed = true;
-                    ScriptHost* host = static_cast<ScriptHost*>(GetSystem("Script"));
-                    if(host) {
-                        printf("Script host found, executing script...\n");
-                        host->LoadAndExecuteScript("script.lua");
-                    }
-                }
-
-            }
-        }
 
         for(DebugLine* line : debugLines) {
             if(line) {
@@ -134,13 +123,20 @@ namespace Omicron {
                 );
             }
 
-            if(entity->HasComponent<MaterialComponent>()) {
-                MaterialComponent* mtlComp = entity->GetCastComponent<MaterialComponent>();
+            MaterialComponent* mtlComp;
+
+            if(entity->HasComponent<MaterialComponent>()) mtlComp = entity->GetCastComponent<MaterialComponent>();
+            else if(comp->materialComponent) mtlComp = comp->materialComponent;
+
+            if(mtlComp) {
                 cmd.material = mtlComp->materialId;
                 cmd.uniforms = mtlComp->uniforms;
                 cmd.alpha = mtlComp->alpha;
-                cmd.uniforms["alpha"] = cmd.alpha;
+            }else{
+                cmd.alpha = 1.f;
             }
+
+            cmd.uniforms["alpha"] = cmd.alpha;
 
             cmds.push_back(cmd);
         }
@@ -287,15 +283,78 @@ namespace Omicron {
         return entities.size();
     }
 
-    void OmicronEngine::Lights(std::vector<Light>& vector) {
+    void OmicronEngine::Lights(std::vector<Light*>& vector) {
         FilteredVector<OmicronEntity*> entities = GetEntitiesWith<LightComponent>();
+        LightComponent* comp = nullptr;
         for(auto entity : entities) {
-            auto comp = entity->GetCastComponent<LightComponent>();
-            Light l(comp->lightData);
-            l.position += entity->transform.Translation;
+            comp = entity->GetCastComponent<LightComponent>();
+            Light* l = new Light(comp->lightData);
+            l->position += entity->transform.Translation;
+            l->direction = -glm::mat3_cast(entity->transform.Rotation)[2];
             vector.push_back(l);
         }
     }
 
+    int OmicronEngine::GetTaggedCount(std::string tag) {
+        return GetTaggedEntities(tag).size();
+    }
+
+    EngineEventHandler* OmicronEngine::GetEventHandler() const {
+        return eventHandler;
+    }
+
+    glm::vec3 OmicronEngine::Position() {
+        return OriginPosition;
+    }
+
+    double SquaredDistPointAABB( const glm::vec3 & p, const BoundingBox& aabb ) {
+        auto check = [&](
+        const double pn,
+        const double bmin,
+        const double bmax) -> double {
+            double out = 0;
+            double v = pn;
+
+            if ( v < bmin ) {
+                double val = (bmin - v);
+                out += val * val;
+            }
+
+            if ( v > bmax ) {
+                double val = (v - bmax);
+                out += val * val;
+            }
+
+            return out;
+        };
+
+        // Squared distance
+        double sq = 0.0;
+
+        sq += check( p.x, aabb.min.x, aabb.max.x );
+        sq += check( p.y, aabb.min.y, aabb.max.y );
+        sq += check( p.z, aabb.min.z, aabb.max.z );
+
+        return sq;
+    }
+
+    bool TestSphereAABB(glm::vec3 point, float radius, const BoundingBox& aabb ) {
+        return SquaredDistPointAABB(point, aabb) <= (radius * radius);
+    }
+
+    FilteredVector<OmicronEntity*> OmicronEngine::GetPhysicalEntitiesInRange(glm::vec3 point, float range) {
+        FilteredVector<OmicronEntity*> entities;
+
+        for(auto e : GetEntitiesWith<PhysicsComponent>()) {
+            PhysicsComponent* phys = e->GetCastComponent<PhysicsComponent>();
+            auto box = phys->GetBoundingBox();
+
+            if(TestSphereAABB(point, range, box)) {
+                entities.push_back(e);
+            }
+        }
+
+        return entities;
+    }
 
 };

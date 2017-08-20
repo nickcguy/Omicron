@@ -9,6 +9,7 @@
 #include <io/ComponentFactory.hpp>
 #include <io/EngineLoader.hpp>
 #include <glm/glm.hpp>
+#include <script/IScriptable.hpp>
 #include "OmicronComponent.hpp"
 #include "../entity/OmicronEntity.hpp"
 
@@ -21,8 +22,8 @@ namespace Omicron {
             this->lightData = other->lightData;
         }
 
-        inline LightComponent(LightType type = POINT) {
-            lightData.type = type;
+        inline LightComponent(LightType type = POINT) : lightData(new Light){
+            lightData->type = type;
         }
 
         virtual OmicronComponent* Clone() override {
@@ -33,7 +34,11 @@ namespace Omicron {
             return "LightComponent";
         }
 
-        Light lightData;
+        Light* GetLightData() {
+            return lightData;
+        }
+
+        Light* lightData = nullptr;
     };
 
     class LightComponentFactory : public IComponentFactory {
@@ -101,15 +106,15 @@ namespace Omicron {
             }
 
             LightComponent* comp = new LightComponent(type);
-            comp->lightData.colour = colour;
-            comp->lightData.position = position;
-            comp->lightData.direction = direction;
-            comp->lightData.constant  = constant ;
-            comp->lightData.linear  = linear;
-            comp->lightData.quadratic  = quadratic;
-            comp->lightData.cutoff  = cutoff;
-            comp->lightData.outerCutoff  = outerCutoff;
-            comp->lightData.intensity = intensity;
+            comp->lightData->colour = colour;
+            comp->lightData->position = position;
+            comp->lightData->direction = direction;
+            comp->lightData->constant  = constant ;
+            comp->lightData->linear  = linear;
+            comp->lightData->quadratic  = quadratic;
+            comp->lightData->cutoff  = cutoff;
+            comp->lightData->outerCutoff  = outerCutoff;
+            comp->lightData->intensity = intensity;
             entity->SetComponent<LightComponent>(comp);
         }
 
@@ -119,6 +124,22 @@ namespace Omicron {
     };
 
     REGISTER_COMPONENT_FACTORY(LightComponentFactory);
+
+    class LightComponentAdapter : public IScriptable {
+    public:
+        virtual void Register(const sel::State& state) override;
+        virtual const char* Name() override;
+    };
+
+    class LightAdapter : public IScriptable {
+    public:
+        virtual void Register(const sel::State& state) override;
+
+        virtual const char* Name() override;
+    };
+
+    REGISTER_SCRIPTABLE(LightComponentAdapter)
+    REGISTER_SCRIPTABLE(LightAdapter)
 
 }
 

@@ -36,6 +36,10 @@ delete ptr; \
 ptr = nullptr;
 #endif
 
+#ifndef EXTRACT_VECTOR
+#define EXTRACT_VECTOR(vec) {vec.x, vec.y, vec.z}
+#endif
+
 namespace Omicron {
 
     int GetDrawCalls();

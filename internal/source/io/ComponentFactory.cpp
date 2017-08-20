@@ -8,7 +8,7 @@
 namespace Omicron {
 
     ComponentFactory::ComponentFactory(Omicron::IComponentFactory* fac) {
-        printf("Registering Component factory at runtime: %s\n", fac->Name());
+        printf("Registering Component factory at runtime: %s\n", fac->Name().c_str());
         if(fac != nullptr)
             EngineLoader::AddComponentFactory(fac);
     }

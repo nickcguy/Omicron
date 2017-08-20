@@ -30,8 +30,8 @@ int main(int argc, char** argv) {
             useOVR = true;
     }
 
-    std::cout << "Press any key to continue...";
-    std::cin.ignore();
+//    std::cout << "Press any key to continue...";
+//    std::cin.ignore();
     if(useOVR) {
         printf("\"%s\" launch flag detected, initialising in OVR mode... [%s]\n", OVR_FLAG, useOVR ? "true" : "false");
     }
@@ -85,20 +85,22 @@ int main(int argc, char** argv) {
     OmicronEngine* engine = engineWrapper.GetChild();
 
     #if !USE_SOURCE_WORLD
-    EngineLoader::LoadIntoEngine("engines/testEngine.xml", engine);
-    if(OVRContext* context = dynamic_cast<OVRContext*>(context)) {
-        std::vector<OmicronEntity*> leftHandEntities = engine->GetTaggedEntities_All({"ovrHand", "ovrHand_Left"});
-        if(!leftHandEntities.empty()) {
-            auto e = leftHandEntities[0];
-            context->SetHandEntity(ovrHand_Left, e);
-        }
-        std::vector<OmicronEntity*> rightHandEntities = engine->GetTaggedEntities_All({"ovrHand", "ovrHand_Right"});
-        if(!rightHandEntities.empty()) {
-            auto e = rightHandEntities[0];
-            context->SetHandEntity(ovrHand_Right, e);
-        }
+    EngineLoader::LoadIntoEngine("engines/testEngine.xml", engine, [engine, context]() {
+        if(OVRContext* c = dynamic_cast<OVRContext*>(context)) {
+            std::vector<OmicronEntity*> leftHandEntities = engine->GetTaggedEntities_All({"ovrHand", "ovrHand_Left"});
+            if(!leftHandEntities.empty()) {
+                auto e = leftHandEntities[0];
+                c->SetHandEntity(ovrHand_Left, e);
+            }
+            std::vector<OmicronEntity*> rightHandEntities = engine->GetTaggedEntities_All({"ovrHand", "ovrHand_Right"});
+            if(!rightHandEntities.empty()) {
+                auto e = rightHandEntities[0];
+                c->SetHandEntity(ovrHand_Right, e);
+            }
 
-    }
+        }
+    });
+
 
     #else
 

@@ -434,7 +434,7 @@ namespace Omicron {
 
 
             if(toDeferred != (glfwGetKey(context->GetWindow(), GLFW_KEY_G) == GLFW_PRESS)) {
-                auto deferredMtl = mtlManager.GetMaterialBase("Deferred", true);
+                auto deferredMtl = mtlManager.GetMaterialBase("Default", true);
                 auto samplers = mtl->GetSamplers();
                 deferredMtl->SetUniforms();
 //                PostIncludes(deferredMtl);

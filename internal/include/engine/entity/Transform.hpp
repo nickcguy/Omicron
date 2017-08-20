@@ -63,6 +63,16 @@ namespace Omicron {
         GUARD_SETTER(SetRotation, Rotation, glm::quat, RotationMutex);
         GUARD_SETTER(SetScale, Scale, glm::vec3, ScaleMutex);
 
+        inline void Translate(glm::vec3 offset) {
+            glm::vec3 t(Translation);
+            t += offset;
+            SetTranslation(t);
+        }
+
+        inline void Rotate(glm::quat offset) {
+            SetRotation(glm::rotate(Rotation, offset.w, {offset.x, offset.y, offset.z}));
+        }
+
         std::mutex TranslationMutex;
         std::mutex RotationMutex;
         std::mutex ScaleMutex;

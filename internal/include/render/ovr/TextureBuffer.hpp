@@ -71,6 +71,7 @@ namespace Omicron {
 
                 this->texCount = texCount = (displayableOnHmd ? 1 : texCount);
                 this->texIds.resize(this->texCount);
+
                 glGenFramebuffers(1, &fboId);
                 glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 
@@ -194,12 +195,10 @@ namespace Omicron {
                 return texSize;
             }
 
-            void SetAndClearRenderSurface(DepthBuffer* dbuffer, bool clearDepthBuffer = true)
+            void SetAndClearRenderSurface(DepthBuffer* dbuffer, bool clearDepthBuffer = true, bool clearColourBuffer = true, bool useSRGB = true)
             {
                 GLuint curTexId;
-                Utils::CheckErrors("Pre glBindFramebuffer(GL_FRAMEBUFFER, fboId)");
                 glBindFramebuffer(GL_FRAMEBUFFER, fboId);
-                Utils::CheckErrors("glBindFramebuffer(GL_FRAMEBUFFER, fboId)");
 
                 if (TextureChain) {
                     int curIndex;
@@ -231,19 +230,28 @@ namespace Omicron {
                 glViewport(0, 0, texSize.w, texSize.h);
                 Utils::CheckErrors("glViewport(0, 0, texSize.w, texSize.h)");
                 glClearColor(0.f, 0.f, 0.f, 1.f);
-                if(clearDepthBuffer)
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                else
+                Utils::CheckErrors("glClearColor(0.f, 0.f, 0.f, 1.f)");
+                if(clearColourBuffer)
                     glClear(GL_COLOR_BUFFER_BIT);
-                glEnable(GL_FRAMEBUFFER_SRGB);
+                Utils::CheckErrors("glClear(GL_COLOR_BUFFER_BIT)");
+                if(clearDepthBuffer)
+                    glClear(GL_DEPTH_BUFFER_BIT);
+                Utils::CheckErrors("glClear(GL_DEPTH_BUFFER_BIT)");
+                if(useSRGB)
+                    glEnable(GL_FRAMEBUFFER_SRGB);
+                Utils::CheckErrors("glEnable(GL_FRAMEBUFFER_SRGB)");
+
 
                 glEnable(GL_DEPTH_TEST);
                 glEnable(GL_BLEND);
                 glEnable(GL_CULL_FACE);
+                Utils::CheckErrors("glEnable(GL_CULL_FACE)");
 
                 glCullFace(GL_BACK);
                 glFrontFace(GL_CW);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                Utils::CheckErrors("TextureBuffer setAndClear");
             }
 
             void UnsetRenderSurface() {

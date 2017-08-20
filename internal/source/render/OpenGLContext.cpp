@@ -114,7 +114,7 @@ namespace Omicron {
                 if(coreEngineWrapper) {
                     OmicronEngine* engine = coreEngineWrapper->GetChild();
                     engine->Clear();
-                    EngineLoader::LoadIntoEngine("engines/testEngine.xml", engine);
+                    EngineLoader::LoadIntoEngine("engines/testEngine.xml", engine, [](){});
                 }
             }
         });

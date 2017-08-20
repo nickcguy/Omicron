@@ -10,6 +10,8 @@
 #include <render/RenderCommand.hpp>
 #include <render/PrimitiveRenderer.hpp>
 #include <Extras/OVR_Math.h>
+#include <render/DecalRenderer.hpp>
+#include <render/shadow/DirectionalShadowMapper.hpp>
 
 namespace Omicron {
 
@@ -36,11 +38,14 @@ namespace Omicron {
         void SetCubemap(std::vector<std::string> vector);
         void SetGradient(std::string imagePath);
 
+        OpenGLContext* context = nullptr;
+        PrimitiveRenderer primitiveRenderer;
+
     protected:
         unsigned int polygonMode = GL_FILL;
         MaterialManager mtlManager;
-        OpenGLContext* context;
-        PrimitiveRenderer primitiveRenderer;
+        DirectionalShadowMapper shadowMapper;
+//        DecalRenderer decalRenderer;
         long long int frameIndex = 0;
         int bufferType = 0;
         Shader cubemapShader;

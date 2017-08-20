@@ -18,6 +18,8 @@ namespace Omicron {
         Shader() {}
         Shader &Use();
 
+        int Find(std::string name);
+
         virtual ~Shader();
 
         void SetSources(std::string vertSource, std::string fragSource, std::string geomSource = "");

@@ -14,6 +14,7 @@ namespace Omicron {
         VERTEX,
         INDEXED,
         POINTCLOUD,
+        DECAL,
         RenderCommandType_LENGTH
     };
 

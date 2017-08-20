@@ -11,6 +11,7 @@
 #include <utility>
 #include <script/adapters/OmicronEntityAccessor.hpp>
 #include <script/adapters/OmicronEngineAccessor.hpp>
+#include <engine/OmicronEngine.hpp>
 
 namespace Omicron {
 
@@ -33,21 +34,30 @@ namespace Omicron {
 
         explicit ScriptRef(const ScriptRef* other) : bindName(other->bindName), funcName(other->funcName), funcRef(other->funcRef) {}
 
-        inline void Invoke(float delta, OmicronEngineAccessor world, OmicronEntityAccessor entity, int argC, void** argV) {
-                switch(argC) {
-                    case 0: funcRef(delta, &world, &entity); break;
-                    case 1: funcRef(delta, &world, &entity, argV[0]); break;
-                    case 2: funcRef(delta, &world, &entity, argV[0], argV[1]); break;
-                    case 3: funcRef(delta, &world, &entity, argV[0], argV[1], argV[2]); break;
-                    case 4: funcRef(delta, &world, &entity, argV[0], argV[1], argV[2], argV[3]); break;
-                    case 5: funcRef(delta, &world, &entity, argV[0], argV[1], argV[2], argV[3], argV[4]); break;
-//                    case 6: funcRef(argV[0], argV[1], argV[2], argV[3], argV[4], argV[5]); break;
-//                    case 7: funcRef(argV[0], argV[1], argV[2], argV[3], argV[4], argV[5], argV[6]); break;
-//                    case 8: funcRef(argV[0], argV[1], argV[2], argV[3], argV[4], argV[5], argV[6], argV[7]); break;
-                    default:
-                        printf("[ERROR] Too many arguments, %i is more than 6\n", argC);
-                        break;
-                }
+        inline void Invoke(float delta, OmicronEngine* world, OmicronEntity* entity) {
+            try {
+                funcRef(delta, world, entity);
+            }catch(...) {
+                printf("Uncaught exception\n");
+            }
+        }
+
+        inline void Invoke(float delta, OmicronEngine* world, OmicronEntity* entity, PrimitiveVariant arg) {
+            switch(arg.type) {
+                case PRIMITIVE_NONE:  Invoke(delta, world, entity); break;
+                case PRIMITIVE_INT:   Invoke(delta, world, entity, arg.integer); break;
+                case PRIMITIVE_BOOL:  Invoke(delta, world, entity, arg.boolean); break;
+                case PRIMITIVE_FLOAT: Invoke(delta, world, entity, arg.floating); break;
+            }
+        }
+
+        template <typename T>
+        inline void Invoke(float delta, OmicronEngine* world, OmicronEntity* entity, T argV) {
+            try {
+                funcRef(delta, world, entity, argV);
+            }catch(...) {
+                printf("Uncaught exception\n");
+            }
         }
     };
 
@@ -86,7 +96,7 @@ namespace Omicron {
         std::map<std::string, ScriptRef*> scriptRefs;
         std::vector<ScriptRefInfo> scriptRefInfos;
 
-        sel::State* state;
+        sel::State* state = nullptr;
 
     };
 

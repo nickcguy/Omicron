@@ -66,30 +66,26 @@ namespace Omicron {
             else alphaCmds.push_back(cmd);
         }
 
+        auto deferredMtl = mtlManager.GetMaterialBase("Deferred", true);
+
+//        glUniformMatrix4fv(glGetUniformLocation(deferredMtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*) &view);
+//        glUniformMatrix4fv(glGetUniformLocation(deferredMtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*) &proj);
+
+        deferredMtl->GetShader().Use();
+
+        deferredMtl->GetShader().SetMatrix4("view", view);
+        deferredMtl->GetShader().SetMatrix4("projection", projection);
+        deferredMtl->GetShader().SetInteger("outputbuffer", bufferType);
+
         fboRenderTexture->SetAndClearRenderSurface(fboDepthTexture);
-        for(RenderCommand cmd : solidCmds) {
-            auto mtl = mtlManager.GetMaterialBase(cmd.material, true);
-            mtl->SetUniforms(cmd.uniforms);
-            mtl->GetShader().SetMatrix4("model", cmd.model);
-            mtl->GetShader().SetInteger("outputbuffer", bufferType);
-            mtl->GetShader().SetMatrix4("view", view);
-            mtl->GetShader().SetMatrix4("projection", projection);
-            BaseRenderer::Render(cmd);
-        }
+        for(RenderCommand cmd : solidCmds)
+            Render(cmd, projection, view);
         glDepthMask(GL_FALSE);
-        for(RenderCommand cmd : alphaCmds) {
-            auto mtl = mtlManager.GetMaterialBase(cmd.material, true);
-            mtl->SetUniforms(cmd.uniforms);
-            mtl->GetShader().SetMatrix4("model", cmd.model);
-            mtl->GetShader().SetInteger("outputbuffer", bufferType);
-            mtl->GetShader().SetMatrix4("view", view);
-            mtl->GetShader().SetMatrix4("projection", projection);
-            mtl->GetShader().SetFloat("alpha", cmd.alpha);
-            BaseRenderer::Render(cmd);
-        }
+        for(RenderCommand cmd : alphaCmds)
+            Render(cmd, projection, view);
         glDepthMask(GL_TRUE);
         fboRenderTexture->UnsetRenderSurface();
-        screenRenderTexture->SetAndClearRenderSurface(nullptr);
+//        screenRenderTexture->SetAndClearRenderSurface(nullptr);
         auto quadMtl = mtlManager.GetMaterial("Quad", true);
         quadMtl->GetShader().Use();
         quadMtl->GetShader().SetInteger("outputBuffer", bufferType);
@@ -111,9 +107,9 @@ namespace Omicron {
         quadMtl->GetShader().SetVector3f("viewPos", context->GetCamera()->Position);
         primitiveRenderer.RenderQuad();
         glEnable(GL_CULL_FACE);
-        screenRenderTexture->UnsetRenderSurface();
+//        screenRenderTexture->UnsetRenderSurface();
 
-        BlitToScreen();
+//        BlitToScreen();
 
     }
 
@@ -153,6 +149,32 @@ namespace Omicron {
                           0, 0, w, h,
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    }
+
+    void FlatRenderer::Render(RenderCommand cmd, glm::mat4 proj, glm::mat4 view) {
+        auto mtl = mtlManager.GetMaterial(cmd.material, cmd.materialInstance, true);
+
+        auto deferredMtl = mtlManager.GetMaterialBase("Default", true);
+        auto samplers = mtl->GetSamplers();
+        deferredMtl->SetUniforms();
+//            PostIncludes(deferredMtl);
+
+        int index = 0;
+        for(auto pair : samplers) {
+            glActiveTexture(GL_TEXTURE0 + index);
+            pair.second->Bind();
+            deferredMtl->GetShader().SetInteger((pair.first + "Map").c_str(), index);
+            index++;
+        }
+
+//        glUniformMatrix4fv(glGetUniformLocation(deferredMtl->GetShader().ID, "view"), 1, GL_TRUE, (FLOAT*) &view);
+//        glUniformMatrix4fv(glGetUniformLocation(deferredMtl->GetShader().ID, "projection"), 1, GL_TRUE, (FLOAT*) &proj);
+        deferredMtl->GetShader().SetMatrix4("projection", projection);
+        deferredMtl->GetShader().SetMatrix4("view", view);
+        deferredMtl->GetShader().SetMatrix4("model", cmd.model);
+        deferredMtl->GetShader().SetInteger("outputBuffer", static_cast<int>(bufferType));
+
+        BaseRenderer::Render(cmd);
     }
 
 }

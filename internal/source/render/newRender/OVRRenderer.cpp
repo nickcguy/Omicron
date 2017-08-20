@@ -66,6 +66,8 @@ namespace Omicron {
         Resize(context->GetWidth(), context->GetHeight());
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        shadowMapper.Init();
     }
 
     void OVRRenderer::Update(float delta) {
@@ -174,7 +176,7 @@ namespace Omicron {
                 OVR::Sizei idealTexSize = ovr_GetFovTextureSize(session, eyeRenderDesc[i].Eye, hmdDesc.DefaultEyeFov[i], 1);
                 eyeRenderTexture[i] = new ovr::TextureBuffer(session, true, true, idealTexSize, 1, NULL, 1);
                 eyeDepthBuffer[i] = new ovr::DepthBuffer(eyeRenderTexture[i]->GetSize(), 0);
-                fboRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1, 4);
+                fboRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1, 5);
                 fboDepthBuffer[i] = new ovr::DepthBuffer(fboRenderTexture[i]->GetSize(), 0);
                 skyRenderTexture[i] = new ovr::TextureBuffer(session, true, false, idealTexSize, 1, NULL, 1);
                 #if USE_PREPASS
@@ -210,9 +212,14 @@ namespace Omicron {
 
         std::vector<RenderCommand> solidCmds;
         std::vector<RenderCommand> alphaCmds;
-        std::vector<RenderCommand> lightCmds;
+        std::vector<RenderCommand> decalCmds;
 
         for(RenderCommand cmd : cmds) {
+            if(cmd.type == DECAL) {
+                decalCmds.push_back(cmd);
+                return;
+            }
+
             if(cmd.alpha == 1.0)
                 solidCmds.push_back(cmd);
             else alphaCmds.push_back(cmd);
@@ -260,6 +267,8 @@ namespace Omicron {
             glEnable(GL_CULL_FACE);
             glDepthFunc(GL_LESS);
             skyRenderTexture[i]->UnsetRenderSurface();
+
+//            decalRenderer.RenderDecals(decalCmds, proj, view, fboRenderTexture[i], fboDepthBuffer[i]);
         }
         auto lights = context->GetRenderProvider()->Lights();
 
@@ -317,23 +326,32 @@ namespace Omicron {
         }
         #endif
 
+        if(!lights.empty()) {
+            Light* sun = nullptr;
+            for(Light* l : lights) {
+                if(l->type == DIRECTIONAL) {
+                    sun = l;
+                    break;
+                }
+            }
+            if(sun) {
+                shadowMapper.UpdateView(sun);
+                shadowMapper.Render(solidCmds);
+            }
+        }
+
+        const int positionBufferIndex = 3;
+//        unsigned int shadowMap = shadowMapper.GetShadowMap(fboRenderTexture[0]->texIds[positionBufferIndex]);
+        unsigned int shadowMap = shadowMapper.GetFBOMap();
+        Utils::CheckErrors("Building shadowmap");
+
         auto quadMtl = mtlManager.GetMaterial("PBRQuad", true);
         quadMtl->GetShader().Use();
         quadMtl->GetShader().SetInteger("outputBuffer", bufferType);
         for(int i = ovrEye_Left; i <= ovrEye_Right; i++) {
-            eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr);
-            Utils::CheckErrors("eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr)");
-            glDisable(GL_CULL_FACE);
-            glDisable(GL_BLEND);
-
-            Utils::CheckErrors("glDisable(GL_CULL_FACE)");
-            glClearColor(0.0, 0.0, 0.0, 0.0);
-            Utils::CheckErrors("glClearColor(0.0, 0.0, 0.0, 1.0)");
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            Utils::CheckErrors("glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)");
-
             glm::vec3 viewPos = Utils::ConvertVec3(shiftedEyePositions[i]);
             quadMtl->GetShader().SetVector3f("viewPos", viewPos);
+
 
             #if USE_PREPASS
             const char* uniformNames[] = {
@@ -354,19 +372,35 @@ namespace Omicron {
             "AlbedoSpec",
             "Normal",
             "MetRouAo",
-            "Position"
+            "Position",
+            "Distortion"
             };
+
+
+//            quadMtl->GetShader().Use();
 
             int j = 0;
             for(j = 0; j < 4; j++) {
                 glActiveTexture(GL_TEXTURE0 + j);
                 glBindTexture(GL_TEXTURE_2D, fboRenderTexture[i]->texIds[j]);
                 quadMtl->GetShader().SetInteger(uniformNames[j], j);
+                Utils::CheckErrors(std::string("quadMtl->GetShader().SetInteger(")+uniformNames[j]+", j)");
             }
+            j++;
 
-            glActiveTexture(GL_TEXTURE5);
+            glActiveTexture(GL_TEXTURE0 + j);
             glBindTexture(GL_TEXTURE_2D, skyRenderTexture[i]->texIds[0]);
-            quadMtl->GetShader().SetInteger("Skybox", 5);
+            quadMtl->GetShader().SetInteger("Skybox", j);
+            Utils::CheckErrors("quadMtl->GetShader().SetInteger(\"Skybox\", j)");
+
+            j++;
+
+            glActiveTexture(GL_TEXTURE0 + j);
+            Utils::CheckErrors("glActiveTexture(GL_TEXTURE0 + j)");
+            glBindTexture(GL_TEXTURE_2D, shadowMap);
+            Utils::CheckErrors("Binding Shadowmap texture: " + shadowMap);
+            quadMtl->GetShader().SetInteger("ShadowMap", j);
+            Utils::CheckErrors("Binding Shadowmap");
 
             static glm::vec3 zero(0.f);
 
@@ -375,28 +409,41 @@ namespace Omicron {
                 ss << "lights[" << l0 << "]";
                 std::string prefix = ss.str();
                 if(l0 < lights.size()) {
-                    Light light = lights[l0];
-                    quadMtl->GetShader().SetInteger((prefix + ".Active").c_str(), GL_TRUE);
-                    quadMtl->GetShader().SetInteger((prefix + ".Type").c_str(), light.type);
+                    Light* light = lights[l0];
+                    quadMtl->GetShader().SetInteger((prefix + ".Active").c_str(), light->IsActive());
+                    quadMtl->GetShader().SetInteger((prefix + ".Type").c_str(), light->type);
 
-                    quadMtl->GetShader().SetVector3f((prefix + ".Position").c_str(), light.position);
-                    quadMtl->GetShader().SetVector3f((prefix + ".Direction").c_str(), light.direction);
-                    quadMtl->GetShader().SetVector3f((prefix + ".Colour").c_str(), light.colour);
+                    quadMtl->GetShader().SetVector3f((prefix + ".Position").c_str(), light->position);
+                    quadMtl->GetShader().SetVector3f((prefix + ".Direction").c_str(), light->direction);
+                    quadMtl->GetShader().SetVector3f((prefix + ".Colour").c_str(), light->colour);
 
-                    quadMtl->GetShader().SetFloat((prefix + ".Constant").c_str(), light.constant);
-                    quadMtl->GetShader().SetFloat((prefix + ".Linear").c_str(), light.linear);
-                    quadMtl->GetShader().SetFloat((prefix + ".Quadratic").c_str(), light.quadratic);
+                    quadMtl->GetShader().SetFloat((prefix + ".Constant").c_str(), light->constant);
+                    quadMtl->GetShader().SetFloat((prefix + ".Linear").c_str(), light->linear);
+                    quadMtl->GetShader().SetFloat((prefix + ".Quadratic").c_str(), light->quadratic);
 
-                    quadMtl->GetShader().SetFloat((prefix + ".Cutoff").c_str(), light.cutoff);
-                    quadMtl->GetShader().SetFloat((prefix + ".OuterCutoff").c_str(), light.outerCutoff);
+                    quadMtl->GetShader().SetFloat((prefix + ".Cutoff").c_str(), light->cutoff);
+                    quadMtl->GetShader().SetFloat((prefix + ".OuterCutoff").c_str(), light->outerCutoff);
 
-                    quadMtl->GetShader().SetFloat((prefix + ".Intensity").c_str(), light.intensity);
+                    quadMtl->GetShader().SetFloat((prefix + ".Intensity").c_str(), light->intensity);
                 }else{
                     quadMtl->GetShader().SetInteger((prefix + ".Active").c_str(), GL_FALSE);
                 }
+                Utils::CheckErrors(prefix);
             }
+            Utils::CheckErrors("Lights");
 
             #endif
+
+            eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr);
+            Utils::CheckErrors("eyeRenderTexture[i]->SetAndClearRenderSurface(nullptr)");
+            glDisable(GL_CULL_FACE);
+            glDisable(GL_BLEND);
+
+            Utils::CheckErrors("glDisable(GL_CULL_FACE)");
+            glClearColor(0.0, 0.0, 0.0, 0.0);
+            Utils::CheckErrors("glClearColor(0.0, 0.0, 0.0, 1.0)");
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            Utils::CheckErrors("glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)");
 
             primitiveRenderer.RenderQuad();
             Utils::CheckErrors("primitiveRenderer.RenderQuad()");

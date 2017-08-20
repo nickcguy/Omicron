@@ -31,7 +31,7 @@ namespace Omicron {
         glBindVertexArray(0);
     }
 
-    MeshComponent::MeshComponent(std::vector<Vertex> vertices, std::vector<unsigned int> indices) : vertices(vertices), indices(indices) {
+    MeshComponent::MeshComponent(std::vector<Vertex> vertices, std::vector<unsigned int> indices, unsigned int primitive) : vertices(vertices), indices(indices), primitive(primitive) {
         std::vector<float> flatVerts = FlattenVertexList(vertices);
         size = indices.size();
 
@@ -45,7 +45,6 @@ namespace Omicron {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_STATIC_DRAW);
         type = RenderCommandType::INDEXED;
-        primitive = GL_TRIANGLE_STRIP;
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Position));

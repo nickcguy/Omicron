@@ -102,6 +102,8 @@ namespace Omicron {
 
         glm::vec3 GetCameraPosition();
 
+        OpenGLContext* GetContext() const;
+
     protected:
         unsigned int polygonMode = GL_FILL;
         Shader shader;

@@ -43,13 +43,13 @@ namespace Omicron {
     }
 
     void MaterialComponentAdapter::Register(const sel::State& state) {
-        state["MaterialComponent"].SetClass<MaterialComponentAccessor>(
-            "Get", &MaterialComponentAccessor::Get,
-            "Set", &MaterialComponentAccessor::Set,
-            "GetUniform", &MaterialComponentAccessor::GetUniform,
-            "SetUniform", &MaterialComponentAccessor::SetUniform,
-            "GetAlpha", &MaterialComponentAccessor::GetAlpha,
-            "SetAlpha", &MaterialComponentAccessor::SetAlpha
+        state["MaterialComponent"].SetClass<MaterialComponent>(
+            "Name", &MaterialComponent::Name,
+            "GetUniform", &MaterialComponent::GetUniform,
+            "SetUniform", &MaterialComponent::SetUniform,
+            "HasUniform", &MaterialComponent::HasUniform,
+            "GetAlpha", &MaterialComponent::GetAlpha,
+            "SetAlpha", &MaterialComponent::SetAlpha
         );
     }
 

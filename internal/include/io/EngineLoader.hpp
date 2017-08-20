@@ -26,7 +26,7 @@ namespace Omicron {
 
         static IComponentFactory* GetComponentFactory(std::string name);
         static void AddComponentFactory(IComponentFactory* fac);
-        static void LoadIntoEngine(std::string file, OmicronEngine* engine);
+        static void LoadIntoEngine(std::string file, OmicronEngine* engine, std::function<void(void)> callback);
 
         static std::string Attribute(XMLElement* element, std::string name);
 

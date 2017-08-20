@@ -12,6 +12,7 @@
 #include <engine/system/OmicronSystem.hpp>
 #include <engine/input/InputProvider.hpp>
 #include "render/IRenderProvider.hpp"
+#include "EngineEventHandler.hpp"
 
 namespace Omicron {
 
@@ -73,6 +74,7 @@ namespace Omicron {
 
     class OmicronEngine : public IRenderProvider {
     public:
+        OmicronEngine() : eventHandler(new EngineEventHandler(this)) {}
         explicit OmicronEngine(int targetIps, OmicronEngineWrapper* owner);
 
         OmicronEngine(OmicronEngine&) = delete;
@@ -92,7 +94,7 @@ namespace Omicron {
 
         void Renderables(std::vector<RenderCommand>& cmds) override;
 
-        virtual void Lights(std::vector<Light>& vector) override;
+        virtual void Lights(std::vector<Light*>& vector) override;
 
         void SetTargetIPS(int targetIps);
         void CalculateInterval();
@@ -101,6 +103,7 @@ namespace Omicron {
         Omicron::FilteredVector<OmicronEntity*> GetTaggedEntities(std::string tag);
         Omicron::FilteredVector<OmicronEntity*> GetTaggedEntities_All(std::vector<std::string> tags);
 
+        int GetTaggedCount(std::string tag);
         int EntityCount();
 
         template <typename T> inline Omicron::FilteredVector<OmicronEntity*> GetEntitiesWith() {
@@ -133,7 +136,16 @@ namespace Omicron {
 
         OmicronEntity* UseTemplate(std::string name, bool addToWorld = true);
 
+
         void Clear();
+
+        EngineEventHandler* GetEventHandler() const;
+
+        virtual glm::vec3 Position() override;
+
+        glm::vec3 OriginPosition;
+
+        FilteredVector<OmicronEntity*> GetPhysicalEntitiesInRange(glm::vec3 point, float range);
 
     protected:
         /** Target Iterations per second */
@@ -151,7 +163,7 @@ namespace Omicron {
         std::vector<OmicronEntity*> entities;
         std::map<std::string, OmicronEntity*> templateEntities;
         std::vector<OmicronSystem*> systems;
-
+        EngineEventHandler* eventHandler;
 
     };
 

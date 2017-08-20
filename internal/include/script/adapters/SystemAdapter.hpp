@@ -12,6 +12,8 @@ namespace Omicron {
 
     struct SystemAccessor {
         void PrintMessage(std::string s);
+        float DegToRad(float deg);
+        float RadToDeg(float rad);
     };
 
     class SystemAdapter : public IScriptable {

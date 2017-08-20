@@ -9,43 +9,27 @@
 
 namespace Omicron {
 
-//    OmicronEngineAccessor::OmicronEngineAccessor() {}
+    OmicronEngineAccessor::OmicronEngineAccessor() {}
 
-    OmicronEngineAccessor::OmicronEngineAccessor(std::string engineName) : engineName(std::move(engineName)) {}
-
-//    OmicronEngineAccessor::OmicronEngineAccessor(OmicronEngine* engine) : engine(engine) {}
-
-    std::vector<OmicronEntityAccessor> OmicronEngineAccessor::GetTagged(std::string tag) {
-        std::vector<OmicronEntityAccessor> entityAdapters;
-        for(auto entity : GetEngine()->GetTaggedEntities(tag))
-            entityAdapters.emplace_back(entity);
-        return entityAdapters;
-    }
-
-    int OmicronEngineAccessor::GetEntityCount() {
-        return GetEngine()->EntityCount();
-    }
-
-    OmicronEngine* OmicronEngineAccessor::GetEngine() {
-        return OmicronEngineWrapper::GetEngineWrapper("CoreEngine")->GetChild();
-//        return OmicronEngineWrapper::GetEngineWrapper(engineName)->GetChild();
-    }
-
-    int OmicronEngineAccessor::GetTaggedCount(std::string tag) {
-        return GetTagged(tag).size();
-    }
-
-    OmicronEntityAccessor OmicronEngineAccessor::GetTaggedEntity(std::string tag, int id) {
-        std::vector<OmicronEntityAccessor> tagged = GetTagged(tag);
-        return tagged[id];
+    InputState* OmicronEngineAccessor::GetInputState(OmicronEngine* engine) {
+        auto inputs = engine->GetSystem("InputSystem");
+        if(inputs)
+            return dynamic_cast<InputSystem*>(inputs)->GetInputState();
+        return new InputState;
     }
 
     void OmicronEngineAdapter::Register(const sel::State& state) {
-        state["Engine"].SetClass<OmicronEngineAccessor, std::string>(
-            "GetEntityCount", &OmicronEngineAccessor::GetEntityCount,
-            "GetTagged", &OmicronEngineAccessor::GetTagged,
-            "GetTaggedCount", &OmicronEngineAccessor::GetTaggedCount,
-            "GetTaggedEntity", &OmicronEngineAccessor::GetTaggedEntity
+        state["Engine"].SetClass<OmicronEngine>(
+            "GetEntities", &OmicronEngine::GetEntities,
+            "GetEntityCount", &OmicronEngine::EntityCount,
+            "GetTagged", &OmicronEngine::GetTaggedEntities,
+            "GetTaggedCount", &OmicronEngine::GetTaggedCount,
+            "GetTaggedEntities", &OmicronEngine::GetTaggedEntities,
+            "GetTaggedEntitiesAll", &OmicronEngine::GetTaggedEntities_All
+        );
+
+        state["EngineAccessor"].SetClass<OmicronEngineAccessor>(
+            "GetInput", &OmicronEngineAccessor::GetInputState
         );
     }
 

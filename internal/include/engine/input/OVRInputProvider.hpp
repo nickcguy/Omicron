@@ -7,6 +7,7 @@
 
 #include <OVR_CAPI.h>
 #include "InputProvider.hpp"
+#include <glm/glm.hpp>
 
 namespace Omicron {
 
@@ -20,6 +21,22 @@ namespace Omicron {
         ovrTrackingState trackingState = {};
 
         glm::vec3 translationOffset;
+        glm::vec3 forwardVector;
+        glm::vec3 upVector;
+        glm::vec3 rightVector;
+
+        virtual glm::vec3 GetForwardVector() override {
+            return forwardVector;
+        }
+
+        virtual glm::vec3 GetUpVector() override {
+            return upVector;
+        }
+
+        virtual glm::vec3 GetRightVector() override {
+            return rightVector;
+        }
+
     };
 
 }

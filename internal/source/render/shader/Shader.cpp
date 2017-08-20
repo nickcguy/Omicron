@@ -187,5 +187,9 @@ namespace Omicron {
         Compile(vertSource.c_str(), fragSource.c_str(), geomSource.empty() ? nullptr : geomSource.c_str());
     }
 
+    int Shader::Find(std::string name) {
+        return glGetUniformLocation(ID, name.c_str());
+    }
+
 
 };

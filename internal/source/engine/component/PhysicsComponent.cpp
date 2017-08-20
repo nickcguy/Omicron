@@ -130,4 +130,72 @@ namespace Omicron {
         return "PhysicsComponent";
     }
 
+    void PhysicsComponent::ClearForces() {
+        GetBody()->clearForces();
+    }
+
+    void PhysicsComponent::SetGravity(glm::vec3 grav) {
+        GetBody()->setGravity(btVector3(grav.x, grav.y, grav.z));
+    }
+
+    glm::vec3 PhysicsComponent::GetGravity() {
+        btVector3 grav = GetBody()->getGravity();
+        return glm::vec3(grav.x(), grav.y(), grav.z());
+    }
+
+    void PhysicsComponent::ApplyCentralForce(glm::vec3 force) {
+        body->applyCentralForce(EXTRACT_VECTOR(force));
+    }
+
+    void PhysicsComponent::ApplyCentralImpulse(glm::vec3 force) {
+        body->applyCentralImpulse(EXTRACT_VECTOR(force));
+    }
+
+    void PhysicsComponent::ApplyForce(glm::vec3 force, glm::vec3 relPos) {
+        body->applyForce(EXTRACT_VECTOR(force), EXTRACT_VECTOR(relPos));
+    }
+
+    void PhysicsComponent::ApplyImpulse(glm::vec3 force, glm::vec3 relPos) {
+        body->applyImpulse(EXTRACT_VECTOR(force), EXTRACT_VECTOR(relPos));
+    }
+
+    void PhysicsComponent::ApplyTorque(glm::vec3 torque) {
+        body->applyTorque(EXTRACT_VECTOR(torque));
+    }
+
+    void PhysicsComponent::ApplyTorqueImpulse(glm::vec3 torque) {
+        body->applyTorqueImpulse(EXTRACT_VECTOR(torque));
+    }
+
+    std::vector<float> PhysicsComponent::GetWorldPositionSet() {
+        auto trans = GetBodyTransform();
+        std::vector<float> pos(3);
+        pos[0] = trans.getOrigin().x();
+        pos[1] = trans.getOrigin().y();
+        pos[2] = trans.getOrigin().z();
+        return pos;
+    }
+
+    float PhysicsComponent::GetWorldPosition(int val) {
+        return GetWorldPositionSet()[glm::clamp(val, 0, 2)];
+    }
+
+    PhysicsComponent::PhysicsComponent() {}
+
+    BoundingBox PhysicsComponent::GetBoundingBox() {
+        btVector3 min;
+        btVector3 max;
+
+        body->getAabb(min, max);
+//        auto trans = GetBodyTransform();
+
+//        min += trans.getOrigin();
+//        max += trans.getOrigin();
+
+        return BoundingBox{
+            {min.x(), min.y(), min.z()},
+            {max.x(), max.y(), max.z()}
+        };
+    }
+
 }

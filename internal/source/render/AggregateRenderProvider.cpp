@@ -22,8 +22,14 @@ namespace Omicron {
             providerPtr->Renderables(cmds);
     }
 
-    void AggregateRenderProvider::Lights(std::vector<Light>& vector) {
+    void AggregateRenderProvider::Lights(std::vector<Light*>& vector) {
         for(auto providerPtr : providerPtrs)
             providerPtr->Lights(vector);
+    }
+
+    glm::vec3 AggregateRenderProvider::Position() {
+        if(providerPtrs.empty())
+            return glm::vec3();
+        return providerPtrs[0]->Position();
     }
 };

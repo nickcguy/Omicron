@@ -5,6 +5,7 @@
 #ifndef OMICRONRENDER_OVRCONTEXT_HPP
 #define OMICRONRENDER_OVRCONTEXT_HPP
 
+#include <engine/input/OVRInputProvider.hpp>
 #include "../OpenGLContext.hpp"
 
 namespace Omicron {
@@ -37,8 +38,8 @@ namespace Omicron {
         ovrHmdDesc hmdDesc;
         ovrTrackingState trackingState;
 
-        OmicronEntity* handEntities[2];
-
+        OmicronEntity* handEntities[2] = {nullptr, nullptr};
+        OVRInputProvider* ovrInputProvider = nullptr;
     };
 
 }

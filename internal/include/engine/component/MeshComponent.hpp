@@ -10,6 +10,7 @@
 #include <data/material/OmicronMaterial.hpp>
 #include <render/RenderCommand.hpp>
 #include "OmicronComponent.hpp"
+#include "MaterialComponent.hpp"
 
 namespace Omicron {
 
@@ -18,7 +19,7 @@ namespace Omicron {
 
         explicit MeshComponent(std::vector<MeshFactory::Vertex> vertices);
         explicit MeshComponent(MeshComponent* other);
-        MeshComponent(std::vector<MeshFactory::Vertex> vertices, std::vector<unsigned int> indices);
+        MeshComponent(std::vector<MeshFactory::Vertex> vertices, std::vector<unsigned int> indices, unsigned int primitive = GL_TRIANGLE_STRIP);
 
         virtual OmicronComponent* Clone() override;
 
@@ -40,6 +41,8 @@ namespace Omicron {
         static MeshComponent* FromPath(std::string path);
 
         virtual std::string Name() override;
+
+        MaterialComponent* materialComponent = nullptr;
 
     protected:
         std::vector<float> FlattenVertexList(std::vector<MeshFactory::Vertex> vertices);

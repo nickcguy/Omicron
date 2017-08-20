@@ -28,11 +28,7 @@ namespace Omicron {
     }
 
     void OmicronMaterialAdapter::Register(const sel::State& state) {
-        state["Material"].SetClass<MaterialAccessor, std::string>(
-            "GetUniform", &MaterialAccessor::GetUniform,
-            "SetUniform", &MaterialAccessor::SetUniform,
-            "Interp", &MaterialAccessor::AddInterpValue
-        );
+
     }
 
     const char* OmicronMaterialAdapter::Name() {

@@ -95,6 +95,13 @@ namespace Omicron {
 
         #endif
 
+        engine->GetEventHandler()->AddGlobalListener(new LambdaEngineEventListener([this](EngineEventHandler* handler, EventArgs args) {
+            ScriptEvent sEvent;
+            sEvent.eventName = args.eventName;
+            sEvent.data = args.data;
+            PostEvent(sEvent);
+        }));
+
 
 //        auto omicronNs = ns.beginNamespace("Omicron");
 //        ns.addFunction("printMessage", PrintMessage);
@@ -156,15 +163,15 @@ namespace Omicron {
         std::vector<OmicronEntity*> entities = engine->GetEntitiesWith<ScriptComponent>();
         std::vector<ScriptEvent> events = GetEvents();
         static const std::string tickEventName = "Tick";
-        events.push_back(ScriptEvent{tickEventName});
-
-        auto engineAdapter = OmicronEngineAccessor("CoreEngine");
+        events.push_back(ScriptEvent{tickEventName, PrimitiveVariant()});
 
         for(auto entity : entities) {
             ScriptComponent* comp = entity->GetCastComponent<ScriptComponent>();
             if(comp->scriptRefInfos.empty()) continue;
-            std::string script = comp->script;
-            comp->state = ExecuteScript(script);
+            if(!comp->state) {
+                std::string script = comp->script;
+                comp->state = ExecuteScript(script);
+            }
 
             sel::Selector exports = (*comp->state)["Exports"];
 
@@ -184,8 +191,8 @@ namespace Omicron {
             if(!comp->hasExecuted) {
                 comp->hasExecuted = true;
                 ScriptRef* ref = comp->GetScriptRef("BeginPlay");
-                auto entityAccessor = OmicronEntityAccessor(entity);
-                ref->Invoke(delta, engineAdapter, entityAccessor, 0, nullptr);
+                if(ref)
+                    ref->Invoke(delta, engine, entity);
             }
         }
 
@@ -194,18 +201,10 @@ namespace Omicron {
             for(auto entity : entities) {
                 ScriptComponent* comp = entity->GetCastComponent<ScriptComponent>();
 
-                auto entityAccessor = OmicronEntityAccessor(entity);
-
-//                (*comp->state)["Delta"]  = delta;
-//                (*comp->state)["World"]  = engineAdapter;
-//                (*comp->state)["Entity"] = entityAccessor;
-
                 for(auto event : events) {
                     ScriptRef* ref = comp->GetScriptRef(event.eventName);
                     if(!ref) continue;
-                    ref->Invoke(delta, engineAdapter, entityAccessor, event.argCount, event.args);
-                    if(event.eventName != tickEventName)
-                        comp->RemoveScriptRef(ref);
+                    ref->Invoke(delta, engine, entity, event.data);
                 }
             }
         }else{
@@ -219,11 +218,7 @@ namespace Omicron {
 //                    (*comp->state)["Imports"]["World"]  = engineAdapter;
 //                    (*comp->state)["Imports"]["Entity"] = OmicronEntityAccessor(entity);
 
-                    auto ent = OmicronEntityAccessor(entity);
-
-                    ref->Invoke(delta, engineAdapter, ent, event.argCount, event.args);
-                    if(event.eventName != tickEventName)
-                        comp->RemoveScriptRef(ref);
+                    ref->Invoke(delta, engine, entity, event.data);
                 }
             }
         }
@@ -244,6 +239,13 @@ namespace Omicron {
     void ScriptHost::PostEvent(ScriptEvent event) {
         std::lock_guard<std::mutex> guard(eventMutex);
         events.push_back(event);
+    }
+
+    void ScriptHost::Invoke(EngineEventHandler* handler, EventArgs args) {
+        ScriptEvent sEvent;
+        sEvent.eventName = args.eventName;
+        sEvent.data = args.data;
+        PostEvent(sEvent);
     }
 
 }

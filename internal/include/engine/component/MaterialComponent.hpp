@@ -25,8 +25,15 @@ namespace Omicron {
         std::string materialId = "";
         float alpha = 1.f;
 
-        // Transient
         std::map<std::string, float> uniforms;
+
+        bool HasUniform(std::string name);
+
+        float GetUniform(std::string name);
+        float GetAlpha();
+        void SetUniform(std::string name, float value);
+        void SetAlpha(float alpha);
+
     };
 
 }

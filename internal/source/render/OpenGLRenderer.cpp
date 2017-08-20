@@ -185,5 +185,9 @@ namespace Omicron {
         return context->GetCamera()->Position;
     }
 
+    OpenGLContext* OpenGLRenderer::GetContext() const {
+        return context;
+    }
+
 
 };

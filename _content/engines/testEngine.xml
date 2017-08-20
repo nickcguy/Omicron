@@ -14,8 +14,24 @@
     <Systems>
         <System type="ScriptHost" />
         <System type="PhysicsSystem" />
+        <System type="InputSystem" />
+        <System type="StickLocomotionSystem" />
         <!--<System type="PsychicInteractionSystem" />-->
     </Systems>
+    <Templates>
+        <Template id="ovrHand" tags="ovrHand">
+            <Transform>
+                <Scale x="0.1" y="0.1" z="0.1" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="true" path="SPHERE">
+                    <Parameter name="rings" value="64"   />
+                    <Parameter name="sectors" value="64" />
+                </Component>
+                <Component type="MaterialComponent" material="Oak Floor" />
+            </Components>
+        </Template>
+    </Templates>
     <Entities>
 
         <Entity tags="floor">
@@ -173,6 +189,17 @@
             </Components>
         </Entity>
 
+        <Entity tags="dragon">
+            <Transform>
+                <Translation x="1.0" z="1.4" />
+                <Scale x="10.0" y="10.0" z="10.0" />
+            </Transform>
+            <Components>
+                <Component type="MeshComponent" primitive="false" path="externalAssets/Models/dragon.obj" />
+                <Component type="MaterialComponent" material="Oak Floor" />
+            </Components>
+        </Entity>
+
         <Entity tags="light">
             <Transform>
                 <Translation y="5.0" />
@@ -218,29 +245,80 @@
             <Transform>
                 <Translation y="1.0" x="-4.1" />
             </Transform>
-            <Components>
+            <Components>*
                 <Component type="LightComponent" lightType="POINT">
                     <Parameter name="colour" r="0.0" g="0.0" b="1.0" />
                     <Parameter name="constant" value="1.0" />
                     <Parameter name="linear" value="0.7" />
                     <Parameter name="quadratic" value="1.8" />
                 </Component>
+                <Component type="ActionComponent">
+                    <Action type="parallel">
+                        <Action name="moveX" time="5.0" min="-10.0" max="10.0" repeat="-1" direction="alternate" />
+                        <Action name="moveZ" time="5.0" min="-10.0" max="10.0" repeat="-1" direction="alternate" start="2.5" />
+                    </Action>
+                </Component>
             </Components>
         </Entity>
+
+        <Entity use="ovrHand" tags="ovrHand_Right" />
+        <Entity use="ovrHand" tags="ovrHand_Left" />
 
         <Entity tags="light">
             <Transform>
                 <Translation y="1.0" x="5" />
+                <Scale x="0.02" y="0.02" z="-0.02" />
             </Transform>
             <Components>
-                <Component type="LightComponent" lightType="POINT">
+                <Component type="MeshComponent" primitive="false" path="externalAssets/Models/torch.fbx" />
+                <Component type="PhysicsComponent" match="true" mass="1.0" />
+                <Component type="MaterialComponent" material="Rusted Iron" />
+                <Component type="LightComponent" lightType="SPOT">
                     <Parameter name="colour" r="0.0" g="1.0" b="1.0" />
-                    <Parameter name="direction" z="1.0" />
+                    <Parameter name="direction" z="-1.0" />
                     <Parameter name="cutoff" value="40" />
                     <Parameter name="outercutoff" value="50" />
                     <Parameter name="constant" value="1.0" />
                     <Parameter name="linear" value="0.7" />
                     <Parameter name="quadratic" value="1.8" />
+                </Component>
+                <Component type="ScriptComponent">
+                    <Script path="light.lua" />
+                    <Bindings>
+                        <Binding event="ovrButton_AChange" function="ToggleLight" />
+                        <Binding event="ovrButton_BChange" function="ToggleFocused" />
+                    </Bindings>
+                </Component>
+            </Components>
+        </Entity>
+
+        <Entity tags="light;sun">
+            <Transform>
+                <Translation y="10.0" />
+            </Transform>
+            <Components>
+                <Component type="LightComponent" lightType="DIRECTIONAL">
+                    <Parameter name="direction" y="-0.7" z="0.4" />
+                    <Parameter name="colour" r="1.0" g="0.976" b="1.0" />
+                    <Parameter name="intensity" value="7.5" />
+                </Component>
+                <Component type="ScriptComponent">
+                    <Script>
+                        Exports = {
+                            tick = function(delta, engine, entity)
+                                local scale = 60
+                                local sys = System.new();
+                                local quat = Quaternion.new()
+                                quat:set_x(1.0)
+                                quat:set_w(sys:DegToRad(0.2 * scale) * delta)
+                                local transform = entity:GetTransform()
+                                transform:Rotate(quat)
+                            end
+                        }
+                    </Script>
+                    <Bindings>
+                        <Binding event="Tick" function="tick" />
+                    </Bindings>
                 </Component>
             </Components>
         </Entity>

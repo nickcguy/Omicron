@@ -1,5 +1,7 @@
 #pragma once
 
+#define OMICRON_INCLUDE_FLOAT_LUA true
+
 #include "ExceptionTypes.h"
 #include <string>
 #include "traits.h"
@@ -40,6 +42,12 @@ template <>
 struct is_primitive<lua_Number> {
     static constexpr bool value = true;
 };
+    #if OMICRON_INCLUDE_FLOAT_LUA
+template <>
+struct is_primitive<float> {
+    static constexpr bool value = true;
+};
+    #endif
 template <>
 struct is_primitive<std::string> {
     static constexpr bool value = true;
@@ -93,6 +101,12 @@ inline bool _get(_id<bool>, lua_State *l, const int index) {
 inline int _get(_id<int>, lua_State *l, const int index) {
     return static_cast<int>(lua_tointeger(l, index));
 }
+
+    #if OMICRON_INCLUDE_FLOAT_LUA
+inline float _get(_id<float>, lua_State* l, const int index) {
+    return static_cast<float>(lua_tonumber(l, index));
+}
+    #endif
 
 inline unsigned int _get(_id<unsigned int>, lua_State *l, const int index) {
 #if LUA_VERSION_NUM >= 502 && LUA_VERSION_NUM < 503
@@ -216,6 +230,20 @@ inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
     return res;
 }
 
+    #if OMICRON_INCLUDE_FLOAT_LUA
+inline float _check_get(_id<float>, lua_State* l, const int index) {
+    int isNum = 0;
+    auto res = lua_tonumberx(l, index, &isNum);
+    if(!isNum){
+        throw GetParameterFromLuaTypeError{
+        [](lua_State *l, int index){luaL_checknumber(l, index);},
+        index
+        };
+    }
+    return static_cast<float>(res);
+}
+    #endif
+
 inline bool _check_get(_id<bool>, lua_State *l, const int index) {
     return lua_toboolean(l, index) != 0;
 }
@@ -338,6 +366,12 @@ inline void _push(lua_State *l, unsigned int u) {
 inline void _push(lua_State *l, lua_Number f) {
     lua_pushnumber(l, f);
 }
+
+    #if OMICRON_INCLUDE_FLOAT_LUA
+inline void _push(lua_State* l, float f) {
+    _push(l, (lua_Number)f);
+}
+    #endif
 
 inline void _push(lua_State *l, const std::string &s) {
     lua_pushlstring(l, s.c_str(), s.size());

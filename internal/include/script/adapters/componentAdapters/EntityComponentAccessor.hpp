@@ -10,6 +10,7 @@
 #include <string>
 #include <script/IScriptable.hpp>
 #include <script/ScriptHost.hpp>
+#include <engine/component/LightComponent.hpp>
 
 namespace Omicron {
 
@@ -18,13 +19,11 @@ namespace Omicron {
     class EntityComponentAccessor {
     public:
         EntityComponentAccessor();
-        EntityComponentAccessor(OmicronEntityAccessor* entity);
 
-        MaterialComponentAccessor* GetMaterial();
-        PhysicsComponentAccessor* GetPhysics();
+        MaterialComponent* GetMaterial(OmicronEntity* entity);
+        PhysicsComponent* GetPhysics(OmicronEntity* entity);
+        Light* GetLight(OmicronEntity* entity);
 
-    protected:
-        OmicronEntity* entity = nullptr;
     };
 
     class EntityComponentAdapter : public IScriptable {

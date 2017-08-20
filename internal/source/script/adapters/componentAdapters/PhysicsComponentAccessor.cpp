@@ -63,17 +63,17 @@ namespace Omicron {
     }
 
     void PhysicsComponentAdapter::Register(const sel::State& state) {
-        state["PhysicsComponent"].SetClass<PhysicsComponentAccessor>(
-        "ClearForces", &PhysicsComponentAccessor::ClearForces,
-        "SetGravity", &PhysicsComponentAccessor::SetGravity,
-        "GetGravity", &PhysicsComponentAccessor::GetGravity,
-        "ApplyCentralForce", &PhysicsComponentAccessor::ApplyCentralForce,
-        "ApplyCentralImpulse", &PhysicsComponentAccessor::ApplyCentralImpulse,
-        "ApplyForce", &PhysicsComponentAccessor::ApplyForce,
-        "ApplyImpulse", &PhysicsComponentAccessor::ApplyImpulse,
-        "ApplyTorque", &PhysicsComponentAccessor::ApplyTorque,
-        "ApplyTorqueImpulse", &PhysicsComponentAccessor::ApplyTorqueImpulse,
-        "GetWorldPosition", &PhysicsComponentAccessor::GetWorldPosition
+        state["PhysicsComponent"].SetClass<PhysicsComponent>(
+        "ClearForces", &PhysicsComponent::ClearForces,
+        "SetGravity", &PhysicsComponent::SetGravity,
+        "GetGravity", &PhysicsComponent::GetGravity,
+        "ApplyCentralForce", &PhysicsComponent::ApplyCentralForce,
+        "ApplyCentralImpulse", &PhysicsComponent::ApplyCentralImpulse,
+        "ApplyForce", &PhysicsComponent::ApplyForce,
+        "ApplyImpulse", &PhysicsComponent::ApplyImpulse,
+        "ApplyTorque", &PhysicsComponent::ApplyTorque,
+        "ApplyTorqueImpulse", &PhysicsComponent::ApplyTorqueImpulse,
+        "GetWorldPosition", &PhysicsComponent::GetWorldPosition
         );
     }
 

@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <script/IScriptable.hpp>
+#include <engine/system/InputSystem.hpp>
 #include "OmicronEntityAccessor.hpp"
 
 namespace Omicron {
@@ -14,18 +15,9 @@ namespace Omicron {
     class OmicronEngine;
 
     struct OmicronEngineAccessor {
-//        explicit OmicronEngineAccessor();
-        OmicronEngineAccessor(std::string engineName);
-//        explicit OmicronEngineAccessor(OmicronEngine* engine);
+        explicit OmicronEngineAccessor();
+        InputState* GetInputState(OmicronEngine* engine);
 
-        std::vector<OmicronEntityAccessor> GetTagged(std::string tag);
-        int GetTaggedCount(std::string tag);
-        OmicronEntityAccessor GetTaggedEntity(std::string tag, int id);
-
-        int GetEntityCount();
-
-        OmicronEngine* GetEngine();
-        std::string engineName;
     };
 
     class OmicronEngineAdapter : public IScriptable {

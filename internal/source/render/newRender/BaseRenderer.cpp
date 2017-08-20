@@ -6,10 +6,11 @@
 #include <render/Cubemap.hpp>
 #include <Extras/OVR_Math.h>
 #include <stb_image.h>
+#include <render/OpenGLContext.hpp>
 
 namespace Omicron {
 
-    BaseRenderer::BaseRenderer(OpenGLContext* context) : context(context) {
+    BaseRenderer::BaseRenderer(OpenGLContext* context) : context(context), shadowMapper(this, 1024) {
         cubemapShader.CompileFromFile("assets/shaders/basic/Cubemap.vert", "assets/shaders/basic/Cubemap.frag");
     }
 

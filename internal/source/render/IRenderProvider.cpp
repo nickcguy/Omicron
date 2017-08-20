@@ -12,8 +12,8 @@ namespace Omicron {
         return cmds;
     }
 
-    std::vector<Light> IRenderProvider::Lights() {
-        std::vector<Light> lights;
+    std::vector<Light*> IRenderProvider::Lights() {
+        std::vector<Light*> lights;
         Lights(lights);
         return lights;
     }
